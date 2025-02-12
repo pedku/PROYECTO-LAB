@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Laboratorios{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="text-center mb-4">Gestión de Laboratorios</h1>
+    <form action="{{ url_for('manage_labs') }}" method="post" class="mb-4">
+        <div class="form-group">
+            <label for="name">Nombre del laboratorio</label>
+            <input type="text" class="form-control" id="name" name="name" placeholder="Nombre del laboratorio" required>
+        </div>
+        <div class="form-group">
+            <label for="description">Descripción</label>
+            <textarea class="form-control" id="description" name="description" placeholder="Descripción" rows="3"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Agregar Laboratorio</button>
+    </form>
+
+    <h2 class="text-center mb-4">Laboratorios Existentes</h2>
+    <div class="row">
+        {% for lab in labs %}
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">{{ lab.name }}</h5>
+                    <p class="card-text">{{ lab.description }}</p>
+                    <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#editModal{{ lab.id }}"> <i class="fa-solid fa-pen-to-square"></i></button>
+                    <form method="POST" action="{{ url_for('delete_lab') }}" style="display:inline;">
+                        <input type="hidden" name="lab_id" value="{{ lab.id }}">
+                        <button type="submit" class="btn btn-danger btn-sm"> <i class="fa-solid fa-trash-can"></i></button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Edit Modal -->
+{% for lab in labs %}
+<div class="modal fade" id="editModal{{ lab.id }}" tabindex="-1" role="dialog" aria-labelledby="editModalLabel{{ lab.id }}" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalLabel{{ lab.id }}">Editar Laboratorio</h5>
+                <button type="button" class="close custom-close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form method="POST" action="{{ url_for('change_lab_details') }}">
+                <div class="modal-body">
+                    <input type="hidden" name="lab_id" value="{{ lab.id }}">
+                    <div class="form-group">
+                        <label for="name{{ lab.id }}">Nombre</label>
+                        <input type="text" class="form-control" id="name{{ lab.id }}" name="name" value="{{ lab.name }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="description{{ lab.id }}">Descripción</label>
+                        <textarea class="form-control" id="description{{ lab.id }}" name="description" rows="3" required>{{ lab.description }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class=" close btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

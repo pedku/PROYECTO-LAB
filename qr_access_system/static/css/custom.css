@@ -1,0 +1,100 @@
+/* Estilo para la barra de navegación */
+.navbar {
+    background-color: #a42d2d; /* Fondo blanco */
+    border-bottom: 1px solid #e0e0e0; /* Línea inferior sutil */
+}
+
+/* Estilo para los enlaces de navegación */
+.nav-link {
+    color: #3d3c3c; /* Color de texto oscuro */
+    font-weight: 500; /* Peso de fuente medio */
+    padding: 10px 15px; /* Espaciado interno */
+    transition: color 0.3s ease; /* Transición suave para el color */
+}
+
+.nav-link:hover {
+    color: #007bff; /* Color azul al pasar el ratón */
+}
+
+/* Estilo para el menú desplegable */
+.dropdown-menu {
+    border-radius: 0; /* Sin bordes redondeados */
+    border: none; /* Sin borde */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra sutil */
+}
+
+/* Estilo para los elementos del menú desplegable */
+.dropdown-item {
+    color: #333333; /* Color de texto oscuro */
+    padding: 10px 20px; /* Espaciado interno */
+    transition: background-color 0.3s ease; /* Transición suave para el fondo */
+}
+
+.dropdown-item:hover {
+    background-color: #014181; /* Fondo gris claro al pasar el ratón */
+}
+
+/* Estilo para el botón de cerrar sesión */
+.navbar .nav-item:last-child .nav-link {
+    color: #dc3545; /* Color rojo */
+    font-weight: 600; /* Peso de fuente más grueso */
+}
+
+.navbar .nav-item:last-child .nav-link:hover {
+    color: #c82333; /* Color rojo más oscuro al pasar el ratón */
+}
+
+.card {
+    border: none; /* Sin borde */
+    border-radius: 10px; /* Bordes redondeados */
+    transition: transform 0.3s ease, box-shadow 0.3s ease; /* Transición suave */
+}
+
+.card:hover {
+    transform: translateY(-5px); /* Elevar ligeramente al pasar el ratón */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); /* Sombra más pronunciada */
+}
+
+/* Estilo para los títulos de las tarjetas */
+.card-title {
+    font-size: 1.25rem; /* Tamaño de fuente más grande */
+    font-weight: 600; /* Peso de fuente más grueso */
+    color: #333333; /* Color de texto oscuro */
+}
+
+/* Estilo para los textos de las tarjetas */
+.card-text {
+    font-size: 1rem; /* Tamaño de fuente */
+    color: #666666; /* Color de texto gris */
+}
+
+/* Estilo para los botones */
+.btn-primary {
+    background-color: #007bff; /* Color de fondo azul */
+    border: none; /* Sin borde */
+    transition: background-color 0.3s ease; /* Transición suave */
+}
+
+.btn-primary:hover {
+    background-color: #0056b3; /* Color de fondo azul más oscuro al pasar el ratón */
+}
+
+.btn-danger {
+    background-color: #dc3545; /* Color de fondo rojo */
+    border: none; /* Sin borde */
+    transition: background-color 0.3s ease; /* Transición suave */
+}
+
+.btn-danger:hover {
+    background-color: #c82333; /* Color de fondo rojo más oscuro al pasar el ratón */
+}
+
+/* Estilo para el botón de cerrar del modal */
+.custom-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    color: red;
+    font-size: 1.5rem;
+    opacity: 1;
+}

@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Users{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="text-center">Manage Users</h1>
+    <form method="POST" action="{{ url_for('manage_users') }}">
+        <input type="hidden" name="action" value="add">
+        <div class="form-group">
+            <label for="username">Nombre de Usuario</label>
+            <input type="text" class="form-control" id="username" name="username" required>
+        </div>
+        <div class="form-group">
+            <label for="password">Contraseña</label>
+            <input type="password" class="form-control" id="password" name="password" required>
+        </div>
+        <div class="form-group">
+            <label for="role">Rol</label>
+            <select class="form-control" id="role" name="role" required>
+                <option value="admin">Admin</option>
+                <option value="viewer">Viewer</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Añadir Usuario</button>
+    </form>
+    <div class="mt-5">
+        <h2>Lista de Usuarios</h2>
+    <table id="dataTable_usuarios" class="table table-striped mt-5">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre de Usuario</th>
+                <th>Rol</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.id }}</td>
+                <td>{{ user.username }}</td>
+                <td>{{ user.role }}</td>
+                <td>
+                    {% if user.id == session.get('user_id') %}
+                    <div>
+                        <button><i class="fa-solid fa-check"></i></button>
+                    <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#editModal{{ user.id }}"><i class="fa-solid fa-pen-to-square"></i></button>
+                    </div>
+                        {% else %}
+                        <div class="d-inline">
+                            <form method="POST" action="{{ url_for('manage_users') }}" style="display:inline;">
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="user_id" value="{{ user.id }}">
+                                <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-trash-can"></i></button>
+                            </form>
+                            <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#editModal{{ user.id }}"><i class="fa-solid fa-pen-to-square"></i></button>
+                        </div>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+</div>
+
+<!-- Edit Modal -->
+{% for user in users %}
+<div class="modal fade" id="editModal{{ user.id }}" tabindex="-1" role="dialog" aria-labelledby="editModalLabel{{ user.id }}" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalLabel{{ user.id }}">Editar Usuario</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form method="POST" action="{{ url_for('change_user_details') }}">
+                <div class="modal-body">
+                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                    <div class="form-group">
+                        <label for="username{{ user.id }}">Nombre de Usuario</label>
+                        <input type="text" class="form-control" id="username{{ user.id }}" name="username" value="{{ user.username }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new_password{{ user.id }}">Nueva Contraseña</label>
+                        <input type="password" class="form-control" id="new_password{{ user.id }}" name="new_password">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="close btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>

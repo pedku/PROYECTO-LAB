@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Agendamiento de Horario{% endblock %}
+
+{% block content %}
+    
+    <div class="container my-5">
+        <h1 class="text-center">Agendamiento de Horario</h1>
+
+        <form method="POST" action="{{ url_for('manage_schedule') }}" class="my-4">
+            <input type="hidden" name="action" value="add">
+            <div class="form-group">
+                <label for="lab_id">Laboratorio</label>
+                <select class="form-control" id="lab_id" name="lab_id" required>
+                    {% for lab in labs %}
+                    <option value="{{ lab.id }}">{{ lab.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="profe_id">Profesor</label>
+                <select class="form-control" id="profe_id" name="profe_id" required>
+                    {% for profe in profes %}
+                    <option value="{{ profe.id }}">{{ profe.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="date" class="form-label">Fecha:</label>
+                <input type="date" class="form-control" id="date" name="date" required>
+            </div>
+            <div class="form-group">
+                <label for="start_time">Hora de Inicio</label>
+                <input type="time" class="form-control" id="start_time" name="start_time" step="60" required>
+            </div>
+            <div class="form-group">
+                <label for="end_time">Hora de Fin</label>
+                <input type="time" class="form-control" id="end_time" name="end_time" step="" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Guardar</button>
+        </form>
+        <h2>Horarios</h2>
+        <table id="dataTable_horario" class="table table-striped">
+            <thead>
+                <tr>
+                    <th class="centered">ID</th>
+                    <th class="centered">Laboratorio</th>
+                    <th class="centered">Profesor</th>
+                    <th class="centered">Fecha</th>
+                    <th class="centered">Hora de Inicio</th>
+                    <th class="centered">Hora de Fin</th>
+                    <th class="centered">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for schedule in schedules %}
+                <tr>
+                    <td>{{ schedule.id }}</td>
+                    <td>{{ schedule.lab.name }}</td>
+                    <td>{{ schedule.professor.username }}</td>
+                    <td>{{ schedule.date }}</td>
+                    <td>{{ schedule.start_time }}</td>
+                    <td>{{ schedule.end_time }}</td>
+                    <td>
+                        <form method="POST" style="display:inline;">
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="schedule_id" value="{{ schedule.id }}">
+                            <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-trash-can"></i></button>
+                        </form>
+                    
+                        <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#editModal{{ schedule.id }}"><i class="fa-solid fa-pen-to-square"></i></button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+   <!-- Edit Modal -->
+   {% for schedule in schedules %}
+   <div class="modal fade" id="editModal{{ schedule.id }}" tabindex="-1" role="dialog" aria-labelledby="editModalLabel{{ schedule.id }}" aria-hidden="true">
+       <div class="modal-dialog" role="document">
+           <div class="modal-content">
+               <div class="modal-header">
+                   <h5 class="modal-title" id="editModalLabel{{ schedule.id }}">Editar Horario</h5>
+                   <button type="button" class="close custom-close" data-dismiss="modal" aria-label="Close">
+                       <span aria-hidden="true">&times;</span>
+                   </button>
+               </div>
+               <form method="POST" action="{{ url_for('manage_schedule') }}">
+                   <div class="modal-body">
+                       <input type="hidden" name="action" value="edit">
+                       <input type="hidden" name="schedule_id" value="{{ schedule.id }}">
+                       <div class="form-group">
+                           <label for="lab_id{{ schedule.id }}">Laboratorio</label>
+                           <select class="form-control" id="lab_id{{ schedule.id }}" name="lab_id" required>
+                               {% for lab in labs %}
+                               <option value="{{ lab.id }}" {% if lab.id == schedule.lab_id %}selected{% endif %}>{{ lab.name }}</option>
+                               {% endfor %}
+                           </select>
+                       </div>
+                       <div class="form-group">
+                           <label for="profe_id{{ schedule.id }}">Profesor</label>
+                           <select class="form-control" id="profe_id{{ schedule.id }}" name="profe_id" required>
+                               {% for profe in profes %}
+                               <option value="{{ profe.id }}" {% if profe.id == schedule.profe_id %}selected{% endif %}>{{ profe.username }}</option>
+                               {% endfor %}
+                           </select>
+                       </div>
+                       <div class="mb-3">
+                           <label for="date{{ schedule.id }}" class="form-label">Fecha:</label>
+                           <input type="date" class="form-control" id="date{{ schedule.id }}" name="date" value="{{ schedule.date }}" required>
+                       </div>
+                       <div class="form-group">
+                           <label for="start_time{{ schedule.id }}">Hora de Inicio</label>
+                           <input type="time" class="form-control" id="start_time{{ schedule.id }}" name="start_time" value="{{ schedule.start_time }}" required>
+                       </div>
+                       <div class="form-group">
+                           <label for="end_time{{ schedule.id }}">Hora de Fin</label>
+                           <input type="time" class="form-control" id="end_time{{ schedule.id }}" name="end_time" value="{{ schedule.end_time }}" required>
+                       </div>
+                   </div>
+                   <div class="modal-footer">
+                       <button type="button" class="btn btn-secondary close" data-dismiss="modal">Cerrar</button>
+                       <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                   </div>
+               </form>
+           </div>
+       </div>
+   </div>
+   {% endfor %}
+{% endblock %}

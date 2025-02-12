@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!--  --> 
+      <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}"> 
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+      <link rel="stylesheet" href="https://cdn.datatables.net/2.2.1/css/dataTables.dataTables.css" />
+      <link rel="stylesheet" href="{{ url_for('static', filename='css/horario.css') }}">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+      <style>
+        body {
+            display: flex;
+        }
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            background-color: #343a40;
+            position: fixed;
+            top: 60px; /* Ajuste para que no quede tapado por el encabezado */
+            left: 0;
+            padding-top: 20px;
+            transition: transform 0.3s ease;
+        }
+        .sidebar.hidden {
+            transform: translateX(-100%);
+        }
+        .sidebar a {
+            color: white;
+            padding: 15px;
+            text-decoration: none;
+            display: block;
+        }
+        .sidebar a:hover {
+            background-color: #495057;
+        }
+        .content {
+            margin-left: 250px;
+            padding: 20px;
+            width: 100%;
+            transition: margin-left 0.3s ease;
+        }
+        .content.expanded {
+            margin-left: 0;
+        }
+        .sidebar .nav-item .nav-link.active {
+            background-color: #495057;
+        }
+        .hamburger-btn {
+            background-color: transparent;
+            border: none;
+            color: #a3161a;
+            padding: 10px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 20px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            transition: left 0.3s ease;
+        }
+        .header.expanded {
+            left: 0;
+        }
+        .header .logo img {
+            max-width: 150px;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+
+<!--
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="alert-container">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+    </div>
+
+-->
+
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    if (typeof Swal === 'undefined') {
+                        return;
+                    }
+                    {% for category, message in messages %}
+                        Swal.fire({
+                            icon: '{{ category }}',
+                            title: '{{ message }}',
+                            showConfirmButton: false,
+                            timer: 3000
+                        });
+                    {% endfor %}
+                });
+            </script>
+        {% endif %}
+    {% endwith %}
+</div>
+
+    <div class="header" id="header">
+        <button class="hamburger-btn" id="hamburger-btn"> <i class="fas fa-bars"></i></button>
+        <div class="logo"><a href="{{ url_for('home')}}">
+            <img src="{{ url_for('static', filename='images/logo_cuc.png') }}" alt="Logo">
+        </a>
+        </div>
+    </div>
+    
+       
+       
+       
+
+    <div class="sidebar" id="sidebar">
+        
+        <div >
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link active" href="{{ url_for('home') }}"><i class="fas fa-home"></i> Inicio</a>
+            </li>
+            {% if session.get('role') == 'viewer' %}
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('horario') }}"><i class="fas fa-calendar-alt"></i> Horarios</a>
+            </li>
+            {% endif %}
+            {% if session.get('role') == 'root' %}
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('manage_users') }}"><i class="fas fa-users"></i> Usuarios</a>
+            </li>
+            {% endif %}
+            {% if session.get('role') in ['root', 'admin'] %}
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('manage_labs') }}"><i class="fas fa-flask"></i> Laboratorios</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('manage_profe') }}"><i class="fas fa-chalkboard-teacher"></i> Profesores</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('manage_schedule') }}"><i class="fas fa-clock"></i> Horarios</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('view_logs') }}"><i class="fas fa-clipboard-list"></i> Registros</a>
+            {% endif %}
+            <li class="nav-item">
+                {% if session.get('user_id') %}
+                <a class="nav-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</a>
+                {% else %}
+                <a class="nav-link" href="{{ url_for('login') }}"><i class="fas fa-sign-in-alt"></i> Iniciar sesión</a>
+                {% endif %}
+            </li>
+        </ul>
+    </div>
+</div>
+
+
+    <main class="content" id="content">
+        {% block content %}{% endblock %}
+    </main>
+   
+   
+    <script>
+        document.getElementById('hamburger-btn').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('hidden');
+            document.getElementById('content').classList.toggle('expanded');
+            document.getElementById('header').classList.toggle('expanded');
+        });
+
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>   
+   <script src="https://cdn.datatables.net/2.2.1/js/dataTables.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+   
+</body>
+</html>

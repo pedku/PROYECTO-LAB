@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container my-5 rounded p-4 bg-light">
+<h2 class="centered">Registros de Acceso</h2>
+<div class=" border container my-5" style="overflow-x:auto;">
+<table id="dataTable_logs" class="table table-striped">
+    <thead>
+        <tr>
+            <th>Usuario</th>
+            <th>Laboratorio</th>
+            <th>Hora</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for log in logs %}
+            <tr>
+                <td>{{ log.user.username }}</td>
+                <td>{{ log.lab.name }}</td>
+                <td>{{ log.timestamp }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+</div>
+{% endblock %}
