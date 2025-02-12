@@ -1,5 +1,2 @@
-from app import app, db
-from flask_migrate import upgrade
-
-with app.app_context():
-    upgrade()
+from qr_access_system.app import db
+db.create_all()
