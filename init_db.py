@@ -1,2 +1,4 @@
-from qr_access_system.app import db
-db.create_all()
+from qr_access_system.app import app, db
+
+with app.app_context():
+    db.create_all()
