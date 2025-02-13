@@ -39,9 +39,9 @@
                         <form method="POST" style="display:inline;">
                             <input type="hidden" name="action" value="delete">
                             <input type="hidden" name="user_id" value="{{ user.id }}">
-                            <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                            <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-trash-can"></i></button>
                         </form>
-                        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#editModal" data-id="{{ user.id }}" data-username="{{ user.username }}" data-qrcode="{{ user.qr_code }}">Editar</button>
+                        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#editModal" data-id="{{ user.id }}" data-username="{{ user.username }}" data-qrcode="{{ user.qr_code }}"><i class="fa-solid fa-pen-to-square"></i></button>
                     </td>
                 </tr>
                 {% endfor %}
@@ -50,6 +50,7 @@
     </div>
 
     <!-- Modal -->
+     {}
     <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -72,7 +73,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                        <button type="button" class="close btn btn-secondary" data-dismiss="modal">Cerrar</button>
                         <button type="submit" class="btn btn-primary">Guardar cambios</button>
                     </div>
                 </form>
@@ -80,7 +81,9 @@
         </div>
     </div>
 
-  
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
         $('#editModal').on('show.bs.modal', function (event) {
             var button = $(event.relatedTarget) // Botón que activó el modal
