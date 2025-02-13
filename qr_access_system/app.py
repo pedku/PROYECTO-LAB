@@ -3,12 +3,13 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timezone
-from flask_migrate import Migrate
+from flask_migrate import Migrate, upgrade
 from functools import wraps
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect
 from dotenv import load_dotenv
+from flask_cors import CORS
 
 # Cargar las variables de entorno desde el archivo .env
 load_dotenv()
@@ -18,17 +19,14 @@ app.secret_key = os.getenv('SECRET_KEY', 'default_secret_key')
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'postgresql://postgres:Pc2001@localhost/laboratorios_db')
+#app.config['SQLALCHEMY_DATABASE_URI'] =  'postgresql://postgres:Pc2001@localhost/laboratorios_db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv( 'DATABASE_URL', 'postgresql://postgres:Pc200172@localhost/laboratorios_db') 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
-limiter = Limiter(
-    get_remote_address,
-    app=app,
-    default_limits=["200 per day", "50 per hour"]
-)
+CORS(app)
 
 #csrf = CSRFProtect(app)
 
@@ -110,7 +108,6 @@ def home():
     return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
-@limiter.limit("200 per minute")
 def login():
     if request.method == 'POST':
         username = request.form['username']
@@ -120,7 +117,6 @@ def login():
             session['user_id'] = user.id
             session['role'] = user.role
             return redirect(url_for('home'))
-        flash('Invalid username or password')
     return render_template('login.html')
 
 @app.route('/logout')
