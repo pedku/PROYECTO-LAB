@@ -244,6 +244,7 @@ def edit_user():
     except Exception as e:
         db.session.rollback()
         flash(f'An error occurred: {str(e)}', 'danger')
+    return redirect(url_for('manage_profe'))
     
 
 @app.route('/manage_schedule', methods=['GET', 'POST'])
