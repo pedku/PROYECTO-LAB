@@ -2,13 +2,18 @@ import logging
 from logging.config import fileConfig
 
 from flask import current_app
-from qr_access_system.app import app # replace 'your_actual_flask_app_name' with the actual name of your Flask application module
 
 from alembic import context
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from qr_access_system.app import app
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
