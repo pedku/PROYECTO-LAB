@@ -2,6 +2,7 @@ import logging
 from logging.config import fileConfig
 
 from flask import current_app
+from qr_access_system.app import app # replace 'your_actual_flask_app_name' with the actual name of your Flask application module
 
 from alembic import context
 
@@ -36,7 +37,9 @@ def get_engine_url():
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-config.set_main_option('sqlalchemy.url', get_engine_url())
+with app.app_context():
+    config.set_main_option('sqlalchemy.url', get_engine_url())
+
 target_db = current_app.extensions['migrate'].db
 
 # other values from the config, defined by the needs of env.py,
