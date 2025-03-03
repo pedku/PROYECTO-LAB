@@ -19,8 +19,7 @@ app.secret_key = os.getenv('SECRET_KEY', 'default_secret_key')
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-#app.config['SQLALCHEMY_DATABASE_URI'] =  'postgresql://postgres:Pc200172@localhost/laboratorios_db'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv( 'DATABASE_URL', 'postgresql://postgres:Pc200172@localhost/laboratorios_db') 
+app.config['SQLALCHEMY_DATABASE_URI'] =  'postgresql://postgres:Pc200172@localhost/laboratorios_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -40,12 +39,12 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-def role_required(role):
+def role_required(*roles):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            if 'role' not in session or session['role'] != role:
-                flash('Unauthorized access')
+            if 'role' not in session or session['role'] not in roles:
+                flash('Unauthorized access', 'danger')
                 return redirect(url_for('home'))
             return f(*args, **kwargs)
         return decorated_function
@@ -74,7 +73,6 @@ class Laboratory(db.Model):
 class Schedule(db.Model):
     __tablename__ = 'schedules'
     id = db.Column(db.Integer, primary_key=True)
-    #lab_name = db.Column(db.String(100), db.ForeignKey('laboratories.name'), nullable=False)
     lab_id = db.Column(db.Integer, db.ForeignKey('laboratories.id'), nullable=False)
     profe_id = db.Column(db.Integer, db.ForeignKey('profes.id'), nullable=False)
     professor = db.relationship('Profe', backref='schedules')
@@ -86,10 +84,10 @@ class Schedule(db.Model):
 class AccessLog(db.Model):
     __tablename__ = 'access_logs'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    profe_id = db.Column(db.Integer, db.ForeignKey('profes.id'), nullable=False)
     lab_id = db.Column(db.Integer, db.ForeignKey('laboratories.id'), nullable=False)
     timestamp = db.Column(db.DateTime, default=lambda: datetime.now())
-    user = db.relationship('User', backref='access_logs')
+    professor = db.relationship('Profe', backref='access_logs')
     lab = db.relationship('Laboratory', backref='access_logs')
 
 def create_initial_user():
@@ -145,6 +143,8 @@ def delete_lab():
     flash('Acceso no autorizado')
     return redirect(url_for('home'))
 
+
+
 @app.route('/change_lab_details', methods=['POST'])
 def change_lab_details():
     if 'role' in session and session['role'] in ['root', 'admin']:
@@ -160,6 +160,7 @@ def change_lab_details():
         return redirect(url_for('manage_labs'))
     flash('Acceso no autorizado')
     return redirect(url_for('home'))
+
 
 @app.route('/manage_users', methods=['GET', 'POST'])
 @login_required
@@ -322,15 +323,15 @@ def manage_schedule():
     return render_template('schedule.html', labs=labs, profes=profes, schedules=schedules)
 
 @app.route('/logs')
+@login_required
+@role_required('root', 'admin')
 def view_logs():
-    try:
-        if 'role' in session and session['role'] in ['root', 'admin']:
-            logs = AccessLog.query.all()
-            return render_template('logs.html', logs=logs)
-        flash('Unauthorized access')
-    except Exception as e:
-        flash(f'An error occurred: {str(e)}', 'danger')
-    return redirect(url_for('home'))
+   # try:
+        logs = AccessLog.query.all()
+        return render_template('logs.html', logs=logs)
+   # except Exception as e:
+    #    flash(f'An error occurred: {str(e)}', 'danger')
+     #   return redirect(url_for('home'))
 
 @app.route('/qr', methods=['POST'])
 def validate_qr():
@@ -361,7 +362,7 @@ def validate_qr():
 
         if schedule:
             print(f"Schedule found: {schedule.id}")
-            logs = AccessLog(user_id=profe.id, lab_id=schedule.lab_id, timestamp=datetime.now().strftime('%Y-%m-%d %H:%M'))
+            logs = AccessLog(profe_id=profe.id, lab_id=schedule.lab_id, timestamp=datetime.now().strftime('%Y-%m-%d %H:%M'))
             db.session.add(logs)
             db.session.commit()
             return jsonify({'status': 'success', 'labID': lab_name})

@@ -1,4 +1,7 @@
 {% extends "base.html" %}
+
+{% block title %}Logs de Acceso{% endblock %}
+
 {% block content %}
 <div class="container my-5 rounded p-4 bg-light">
 <h2 class="centered">Registros de Acceso</h2>
@@ -6,15 +9,19 @@
 <table id="dataTable_logs" class="table table-striped">
     <thead>
         <tr>
-            <th>Usuario</th>
+            <th>ID</th>
+            <th>Profesor</th>
+            <th>QR</th>
             <th>Laboratorio</th>
-            <th>Hora</th>
+            <th>HORA DE INGRESO</th>
         </tr>
     </thead>
     <tbody>
         {% for log in logs %}
             <tr>
-                <td>{{ log.user.username }}</td>
+                <td>{{ log.id }}</td>
+                <td>{{ log.professor.username }}</td>
+                <td>{{log.professor.qr_code}}</td>
                 <td>{{ log.lab.name }}</td>
                 <td>{{ log.timestamp }}</td>
             </tr>
