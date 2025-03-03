@@ -19,7 +19,7 @@ app.secret_key = os.getenv('SECRET_KEY', 'default_secret_key')
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-#app.config['SQLALCHEMY_DATABASE_URI'] =  'postgresql://postgres:Pc2001@localhost/laboratorios_db'
+#app.config['SQLALCHEMY_DATABASE_URI'] =  'postgresql://postgres:Pc200172@localhost/laboratorios_db'
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv( 'DATABASE_URL', 'postgresql://postgres:Pc200172@localhost/laboratorios_db') 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -74,6 +74,7 @@ class Laboratory(db.Model):
 class Schedule(db.Model):
     __tablename__ = 'schedules'
     id = db.Column(db.Integer, primary_key=True)
+    #lab_name = db.Column(db.String(100), db.ForeignKey('laboratories.name'), nullable=False)
     lab_id = db.Column(db.Integer, db.ForeignKey('laboratories.id'), nullable=False)
     profe_id = db.Column(db.Integer, db.ForeignKey('profes.id'), nullable=False)
     professor = db.relationship('Profe', backref='schedules')
@@ -336,31 +337,39 @@ def validate_qr():
     try:
         data = request.json
         print(data)
-        labID = data.get('labID')
+        lab_name = data.get('labID')  # Obtener el nombre del laboratorio
         qr_code = data.get('qr')
         current_time = datetime.now().time()
         current_date = datetime.now().date()
-
+        
+        print(f"lab_name: {lab_name}, qr_code: {qr_code}, current_time: {current_time}, current_date: {current_date}")
+        
         profe = Profe.query.filter_by(qr_code=qr_code).first()
         if not profe:
-            return jsonify({'status': 'unauthorized', 'labID': [schedule.lab_id]})
+            print("Invalid QR code")
+            return jsonify({'status': 'unauthorized', 'message': 'Invalid QR code'})
 
-        schedule = Schedule.query.filter(
+        print(f"Profe ID: {profe.id}")
+        
+        schedule = Schedule.query.join(Laboratory).filter(
             Schedule.profe_id == profe.id,
             Schedule.date == current_date,
             Schedule.start_time <= current_time,
             Schedule.end_time >= current_time,
-            Schedule.lab_id == labID
+            Laboratory.name == lab_name
         ).first()
 
         if schedule:
+            print(f"Schedule found: {schedule.id}")
             logs = AccessLog(user_id=profe.id, lab_id=schedule.lab_id, timestamp=datetime.now().strftime('%Y-%m-%d %H:%M'))
             db.session.add(logs)
             db.session.commit()
-            return jsonify({'status': 'success', 'labID': [schedule.lab_id]})
+            return jsonify({'status': 'success', 'labID': lab_name})
         else:
-            return jsonify({'status': 'unauthorized', 'labID': [schedule.lab_id]})
+            print("No valid schedule found")
+            return jsonify({'status': 'unauthorized', 'message': 'No valid schedule found'})
     except Exception as e:
+        print(f"An error occurred: {str(e)}")
         return jsonify({'status': 'error', 'message': f'An error occurred: {str(e)}'})
 
 @app.route('/change_user_details', methods=['POST'])
