@@ -20,7 +20,7 @@ app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv( 'DATABASE_URL', 'postgresql://postgres:Pc200172@localhost/laboratorios_db') 
-#app.config['SQLALCHEMY_DATABASE_URI'] =  '','postgresql://postgres:Pc200172@localhost/laboratorios_db'
+#app.config['SQLALCHEMY_DATABASE_URI'] =  'postgresql://postgres:Pc200172@localhost/laboratorios_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -409,5 +409,4 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
         create_initial_user()
-        port = int(os.environ.get("PORT", 5000))  # Render asigna el puerto dinámicamente
-        app.run(host="0.0.0.0", port=port, debug=True)
+        app.run(debug=True)
