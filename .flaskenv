@@ -1,0 +1,1 @@
+FLASK_APP=qr_access_system.app
