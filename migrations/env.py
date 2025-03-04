@@ -36,7 +36,10 @@ def get_engine_url():
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 
-with current_app.app_context():
+# Ensure the application context is active
+from qr_access_system.app import app
+
+with app.app_context():
     target_db = current_app.extensions['migrate'].db
 
 # other values from the config, defined by the needs of env.py,
