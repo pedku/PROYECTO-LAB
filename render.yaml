@@ -1,0 +1,28 @@
+# Exported from Render on 2025-03-04T00:00:42Z
+databases:
+- name: postgres
+  databaseName: laboratorios_db
+  user: laboratorios_db_user
+  plan: free
+  region: oregon
+  ipAllowList: []
+  postgresMajorVersion: "16"
+services:
+- type: web
+  name: PROYECTO-LAB
+  runtime: python
+  repo: https://github.com/pedku/PROYECTO-LAB
+  plan: free
+  envVars:
+  - key: DATABASE_URL
+    fromDatabase:
+      name: postgres
+      property: connectionString
+  - key: SECRET_KEY
+    sync: false
+  region: oregon
+  buildCommand: pip install -r requirements.txt
+   alembic upgrade head
+  startCommand: python init_db.py && gunicorn -w 4 -b 0.0.0.0:$PORT qr_access_system.app:app
+  autoDeploy: false
+version: "1"
