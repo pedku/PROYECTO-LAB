@@ -129,11 +129,14 @@ def logout():
     return redirect(url_for('login'))
 
 @app.route('/horario', methods=['GET'])
+@login_required
 def horario():
     schedules = Schedule.query.all()
     return render_template('horario.html', schedules=schedules)
 
 @app.route('/delete_lab', methods=['POST'])
+@login_required
+@role_required('root', 'admin')
 def delete_lab():
     if 'role' in session and session['role'] in ['root', 'admin']:
         lab_id = request.form['lab_id']
@@ -149,6 +152,8 @@ def delete_lab():
     return redirect(url_for('home'))
 
 @app.route('/change_lab_details', methods=['POST'])
+@login_required
+@role_required('root', 'admin')
 def change_lab_details():
     if 'role' in session and session['role'] in ['root', 'admin']:
         lab_id = request.form['lab_id']
@@ -192,6 +197,8 @@ def manage_users():
     return render_template('users.html', users=users)
 
 @app.route('/labs', methods=['GET', 'POST'])
+@login_required
+@role_required('root', 'admin')
 def manage_labs():
     if 'role' in session and session['role'] in ['root', 'admin']:
         if request.method == 'POST':
@@ -210,6 +217,8 @@ def manage_labs():
     return redirect(url_for('home'))
 
 @app.route('/manage_profe', methods=['GET', 'POST'])
+@login_required
+@role_required('root', 'admin')
 def manage_profe():
     try:
         if request.method == 'POST':
@@ -236,6 +245,8 @@ def manage_profe():
     return render_template('manage_users.html', users=users)
 
 @app.route('/edit_user', methods=['POST'])
+@login_required
+@role_required('root', 'admin')
 def edit_user():
     try:
         user_id = request.form['user_id']
@@ -251,6 +262,8 @@ def edit_user():
     return redirect(url_for('manage_profe'))
 
 @app.route('/manage_schedule', methods=['GET', 'POST'])
+@login_required
+@role_required('root', 'admin')
 def manage_schedule():
     try:
         if request.method == 'POST':
