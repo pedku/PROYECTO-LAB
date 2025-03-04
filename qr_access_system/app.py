@@ -10,6 +10,7 @@ from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect
 from dotenv import load_dotenv
 from flask_cors import CORS
+import pytz
 
 # Cargar las variables de entorno desde el archivo .env
 load_dotenv()
@@ -19,7 +20,7 @@ app.secret_key = os.getenv('SECRET_KEY', 'default_secret_key')
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv( 'DATABASE_URL', 'postgresql://postgres:Pc200172@localhost/laboratorios_db') 
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv( 'DATABASE_URL', 'postgresql://postgres:Pc200172@localhost/laboratorios_db')
 #app.config['SQLALCHEMY_DATABASE_URI'] =  'postgresql://postgres:Pc200172@localhost/laboratorios_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -27,6 +28,9 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 CORS(app)
+
+# Configurar la zona horaria de Colombia
+COLOMBIA_TZ = pytz.timezone('America/Bogota')
 
 #csrf = CSRFProtect(app)
 
@@ -87,7 +91,7 @@ class AccessLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     profe_id = db.Column(db.Integer, db.ForeignKey('profes.id'), nullable=False)
     lab_id = db.Column(db.Integer, db.ForeignKey('laboratories.id'), nullable=False)
-    timestamp = db.Column(db.DateTime, default=lambda: datetime.now())
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(COLOMBIA_TZ))
     professor = db.relationship('Profe', backref='access_logs')
     lab = db.relationship('Laboratory', backref='access_logs')
 
@@ -144,8 +148,6 @@ def delete_lab():
     flash('Acceso no autorizado')
     return redirect(url_for('home'))
 
-
-
 @app.route('/change_lab_details', methods=['POST'])
 def change_lab_details():
     if 'role' in session and session['role'] in ['root', 'admin']:
@@ -161,7 +163,6 @@ def change_lab_details():
         return redirect(url_for('manage_labs'))
     flash('Acceso no autorizado')
     return redirect(url_for('home'))
-
 
 @app.route('/manage_users', methods=['GET', 'POST'])
 @login_required
@@ -248,7 +249,6 @@ def edit_user():
         db.session.rollback()
         flash(f'An error occurred: {str(e)}', 'danger')
     return redirect(url_for('manage_profe'))
-    
 
 @app.route('/manage_schedule', methods=['GET', 'POST'])
 def manage_schedule():
@@ -284,7 +284,7 @@ def manage_schedule():
                     return redirect(url_for('manage_schedule'))
                 
                 # Verificar si la fecha es anterior a la fecha actual
-                if date_converted < datetime.now().date():
+                if date_converted < datetime.now(COLOMBIA_TZ).date():
                     flash('La fecha no puede ser anterior a la fecha actual', 'warning')
                     return redirect(url_for('manage_schedule'))
               
@@ -327,12 +327,12 @@ def manage_schedule():
 @login_required
 @role_required('root', 'admin')
 def view_logs():
-   # try:
+    try:
         logs = AccessLog.query.all()
         return render_template('logs.html', logs=logs)
-   # except Exception as e:
-    #    flash(f'An error occurred: {str(e)}', 'danger')
-     #   return redirect(url_for('home'))
+    except Exception as e:
+        flash(f'An error occurred: {str(e)}', 'danger')
+        return redirect(url_for('home'))
 
 @app.route('/qr', methods=['POST'])
 def validate_qr():
@@ -341,8 +341,8 @@ def validate_qr():
         print(data)
         lab_name = data.get('labID')  # Obtener el nombre del laboratorio
         qr_code = data.get('qr')
-        current_time = datetime.now().time()
-        current_date = datetime.now().date()
+        current_time = datetime.now(COLOMBIA_TZ).time()
+        current_date = datetime.now(COLOMBIA_TZ).date()
         
         print(f"lab_name: {lab_name}, qr_code: {qr_code}, current_time: {current_time}, current_date: {current_date}")
         
@@ -363,7 +363,7 @@ def validate_qr():
 
         if schedule:
             print(f"Schedule found: {schedule.id}")
-            logs = AccessLog(profe_id=profe.id, lab_id=schedule.lab_id, timestamp=datetime.now().strftime('%Y-%m-%d %H:%M'))
+            logs = AccessLog(profe_id=profe.id, lab_id=schedule.lab_id, timestamp=datetime.now(COLOMBIA_TZ).strftime('%Y-%m-%d %H:%M'))
             db.session.add(logs)
             db.session.commit()
             return jsonify({'status': 'success', 'labID': lab_name})
