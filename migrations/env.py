@@ -2,18 +2,14 @@ import logging
 from logging.config import fileConfig
 
 from flask import current_app
-
+from qr_access_system.app import app
 from alembic import context
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from qr_access_system.app import app
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -46,7 +42,7 @@ def get_engine_url():
 with app.app_context():  # Esto crea el contexto de la aplicación
     target_db = current_app.extensions['migrate'].db  # Ahora sí puede accederse
 
-target_db = current_app.extensions['migrate'].db
+
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
