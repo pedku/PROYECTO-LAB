@@ -24,7 +24,7 @@ services:
   buildCommand: |
       pip install --upgrade pip
       pip install -r requirements.txt
-      alembic upgrade head
+      alembic -c migrations/alembic.ini upgrade head
   startCommand: python init_db.py && gunicorn -w 4 -b 0.0.0.0:$PORT qr_access_system.app:app
   autoDeploy: false
 version: "1"
