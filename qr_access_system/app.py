@@ -365,7 +365,7 @@ def manage_schedule():
             elif action == 'delete':
                 schedule_id = request.form['schedule_id']
                 Schedule.query.filter_by(id=schedule_id).delete()
-            elif action == 'edit':
+            """elif action == 'edit':
                 schedule_id = request.form['schedule_id']
                 schedule = Schedule.query.get(schedule_id)
                 schedule.lab_id = request.form['lab_id']
@@ -373,7 +373,7 @@ def manage_schedule():
                 schedule.date = request.form['date']
                 schedule.start_time = request.form['start_time']
                 schedule.end_time = request.form['end_time']
-            db.session.commit()
+            db.session.commit()"""
     except Exception as e:
         db.session.rollback()
         flash(f'An error occurred: {str(e)}', 'danger')
