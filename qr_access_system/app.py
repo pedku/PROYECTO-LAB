@@ -497,14 +497,18 @@ def upload_schedule():
                     db.session.add(new_schedule)
                 db.session.commit()
                 flash('Horarios cargados exitosamente', 'success')
+                os.remove(filepath)  # Eliminar el archivo después de procesarlo
             except Exception as e:
                 db.session.rollback()
                 flash(f'Ocurrió un error al procesar el archivo: {str(e)}', 'danger')
                 print(e)
+                os.remove(filepath)  # Asegurarse de eliminar el archivo incluso si ocurre un error
             return redirect(url_for('manage_schedule'))
         else:
             flash('Por favor, suba un archivo Excel válido', 'warning')
     return render_template('upload_schedule.html')
+
+
 
 @app.errorhandler(404)
 def page_not_found(e):
