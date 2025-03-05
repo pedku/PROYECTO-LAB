@@ -314,7 +314,7 @@ def manage_schedule():
     try:
         if request.method == 'POST':
             action = request.form.get('action')
-            if action == 'add':
+            if action == 'add' or action == 'edit':
                 lab_id = request.form['lab_id']
                 profe_id = request.form['profe_id']
                 date = request.form['date']
