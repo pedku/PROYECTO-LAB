@@ -452,6 +452,7 @@ def upload_schedule():
                 # Procesar los datos y guardarlos en la base de datos
                 for index, row in df.iterrows():
                     lab_name = str(row['lab_name'])
+                   # description = str(row['description'])
                     qr_code = str(row['qr_code'])
                     date = row['date']
                     start_time = row['start_time']
@@ -470,7 +471,10 @@ def upload_schedule():
                     # Verificar si el laboratorio existe
                     lab = Laboratory.query.filter_by(name=lab_name).first()
                     if not lab:
-                        flash(f'Laboratorio {lab_name} no encontrado', 'warning')
+                        lab = Laboratory(name=lab_name, description='None')	# Crear un nuevo laboratorio con descripción 'None'
+                        db.session.add(lab)
+                        db.session.commit()
+                        flash(f'Laboratorio {lab_name} no encontrado, se ha creado con la descripcion None', 'warning')
                         continue
 
                     # Verificar si el profesor existe
