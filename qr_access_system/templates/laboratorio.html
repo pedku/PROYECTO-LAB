@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Laboratorio{% endblock %}
+
+{% block content %}
+<h1>Laboratorio</h1>
+<div class="container my-5">
+    <h2 class="text-center mb-4">Laboratorios Existentes</h2>
+    <div class="row">
+        {% for lab in labs %}
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm position-relative">
+                <a href="#" data-toggle="modal" data-target="#scheduleModal{{ lab.id }}" class="stretched-link"></a>
+                <div class="card-body">
+                    <h5 class="card-title">{{ lab.name }}</h5>
+                    <p class="card-text">{{ lab.description }}</p>
+                    <button class="btn btn-primary btn-sm position-relative" style="z-index: 1;" data-toggle="modal" data-target="#editModal{{ lab.id }}"> <i class="fa-solid fa-pen-to-square"></i></button>
+                    <form method="POST" action="{{ url_for('delete_lab') }}" style="display:inline;">
+                        <input type="hidden" name="lab_id" value="{{ lab.id }}">
+                        <button type="submit" class="btn btn-danger btn-sm position-relative" style="z-index: 1;"> <i class="fa-solid fa-trash-can"></i></button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+                    
+</div>
+{% endblock %}

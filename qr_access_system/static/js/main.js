@@ -2,12 +2,15 @@ let dataTable;
 let horariodata = false;
 let usuario = false;
 let horariodataTable;
+let labs;
+let labsTable;
 let usuarioTable;
 let dataTableIsInitialized = false;
 let dataTable_viewer;
 let viewer = false;
 let logs = false;
 let dataTable_logs;
+
 const profesOptions = {
     //scrollX: "2000px",
     lengthMenu: [5, 10, 15, 20, 100, 200, 500],
@@ -17,7 +20,7 @@ const profesOptions = {
         { searchable: false, targets: [3] }
         //{ width: "50%", targets: [0] }
     ],
-    pageLength: 3,
+    pageLength: 10,
     destroy: true,
     language: {
         lengthMenu: "Mostrar _MENU_ registros por página",
@@ -46,7 +49,7 @@ const HorarioOptions = {
         { searchable: false, targets: [6] }
         //{ width: "50%", targets: [0] }
     ],
-    pageLength: 3,
+    pageLength: 10,
     destroy: true,
     language: {
         lengthMenu: "Mostrar _MENU_ registros por página",
@@ -73,7 +76,7 @@ const HorarioOptions_viewer = {
         { className: "centered", targets: [0, 1, 2, 3, 4, 5] }
         //{ width: "50%", targets: [0] }
     ],
-    pageLength: 3,
+    pageLength: 10,
     destroy: true,
     language: {
         lengthMenu: "Mostrar _MENU_ registros por página",
@@ -101,7 +104,7 @@ const usuarioOptions = {
         { searchable: false, targets: [3] }
         //{ width: "50%", targets: [0] }
     ],
-    pageLength: 3,
+    pageLength: 5,
     destroy: true,
     language: {
         lengthMenu: "Mostrar _MENU_ registros por página",
@@ -128,7 +131,7 @@ const logsOptions = {
 
         //{ width: "50%", targets: [0] }
     ],
-    pageLength: 3,
+    pageLength: 10,
     destroy: true,
     language: {
         lengthMenu: "Mostrar _MENU_ registros por página",
@@ -145,6 +148,53 @@ const logsOptions = {
             previous: "Anterior"
         }
     }
+
+};
+
+const labsOptions = {
+    scrollY: 300,
+    scrollX: true,
+    scrollCollapse: true,
+    paging: false,
+    autoFill: true,
+    lengthMenu: [5, 10, 15, 20, 100, 200, 500],
+    columnDefs: [
+        { className: "centered", targets: [0, 1, 2] },
+        { orderable: false, targets: [3] }
+    ],
+    pageLength: 5,
+    destroy: true,
+    
+    language: {
+        zeroRecords: "Ningún usuario encontrado",
+        info: "Mostrando de _START_ a _END_ de un total de _TOTAL_ registros",
+        infoEmpty: "Ningún usuario encontrado",
+        infoFiltered: "(filtrados desde _MAX_ registros totales)",
+        search: "Buscar:",
+        loadingRecords: "Cargando...",
+        paginate: {
+            first: "Primero",
+            last: "Último",
+            next: "Siguiente",
+            previous: "Anterior"
+        }
+    }
+}
+
+const initDataTable_labs = async () => {
+    $('[id^=scheduleTable]').each(function() {
+        var tableId = $(this).attr('id');
+        if ($.fn.DataTable.isDataTable('#' + tableId)) {
+            $('#' + tableId).DataTable().destroy();
+        }
+        $('#' + tableId).DataTable(labsOptions);
+
+        
+    });
+   
+
+
+
 
 };
 
@@ -192,12 +242,22 @@ const initDataTable_viewer = async () => {
     viewer = true;
 };
 
+
+
+
 window.addEventListener("load", async () => {
     await initDataTable();
     await initDataTable_horario();
     await initDataTable_usuario();
     await initDataTable_viewer();
     await initDataTable_logs();
+    await initDataTable_labs();
+   
+
+
+
+
+
 
     // Función para volver a enlazar los eventos de los botones
     function bindEditButtons() {

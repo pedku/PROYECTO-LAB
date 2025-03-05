@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Cargar Horarios{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="text-center mb-4">Cargar Horarios</h1>
+    <form action="{{ url_for('upload_schedule') }}" method="post" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="file">Seleccione el archivo Excel</label>
+            <input type="file" class="form-control-file" id="file" name="file" accept=".xlsx" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Cargar</button>
+    </form>
+</div>
+{% endblock %}

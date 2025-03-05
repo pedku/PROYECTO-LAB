@@ -11,6 +11,8 @@ from flask_wtf.csrf import CSRFProtect
 from dotenv import load_dotenv
 from flask_cors import CORS
 import pytz
+import pandas as pd
+from werkzeug.utils import secure_filename
 
 # Cargar las variables de entorno desde el archivo .env
 load_dotenv()
@@ -20,9 +22,15 @@ app.secret_key = os.getenv('SECRET_KEY', 'default_secret_key')
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv( 'DATABASE_URL', 'postgresql://postgres:Pc200172@localhost/laboratorios_db')
-#app.config['SQLALCHEMY_DATABASE_URI'] =  'postgresql://postgres:Pc200172@localhost/laboratorios_db'
+#app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv( 'DATABASE_URL', 'postgresql://postgres:Pc200172@localhost/laboratorios_db')
+app.config['SQLALCHEMY_DATABASE_URI'] =  'postgresql://postgres:Pc200172@localhost/laboratorios_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+UPLOAD_FOLDER = 'uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
@@ -128,12 +136,47 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
+#RUTA HORARIO VIEWER
 @app.route('/horario', methods=['GET'])
 @login_required
 def horario():
     schedules = Schedule.query.all()
     return render_template('horario.html', schedules=schedules)
 
+#RUTA DE CREAR LABORATORIO - visualizar horarios en laboratorios
+@app.route('/labs', methods=['GET', 'POST'])
+@login_required
+def manage_labs():
+    #gestion de laboratorios para usuarios root y admin
+    if 'role' in session and session['role'] in ['root', 'admin']:
+        if request.method == 'POST':
+            name = request.form['name']
+            description = request.form['description']
+            new_lab = Laboratory(name=name, description=description)
+            if Laboratory.query.filter_by(name=name).first():
+                flash('Laboratorio Ya EXISTENTE ', 'warning')
+                return redirect(url_for('manage_labs'))
+            db.session.add(new_lab)
+            db.session.commit()
+            flash('Laboratory added successfully' , 'success')
+        labs = Laboratory.query.all()
+        return render_template('labs.html', labs=labs)
+    #se visualizan los horarios de los laboratorios en usuario viewer
+    if 'role' in session and session['role'] in ['viewer']:
+        labs = Laboratory.query.all()
+        return render_template('labs.html', labs=labs)
+    else:
+        flash('Unauthorized access' , 'danger')
+        return redirect(url_for('home'))
+    
+"""
+#ruta laboratorio viewer
+@app.route('/laboratorio', methods=['POST'])
+@login_required
+def laboratorio():
+    labs = Laboratory.query.all()
+    return render_template('laboratorio.html', labs=labs)
+"""
 @app.route('/delete_lab', methods=['POST'])
 @login_required
 @role_required('root', 'admin')
@@ -196,25 +239,7 @@ def manage_users():
     users = User.query.all()
     return render_template('users.html', users=users)
 
-@app.route('/labs', methods=['GET', 'POST'])
-@login_required
-@role_required('root', 'admin')
-def manage_labs():
-    if 'role' in session and session['role'] in ['root', 'admin']:
-        if request.method == 'POST':
-            name = request.form['name']
-            description = request.form['description']
-            new_lab = Laboratory(name=name, description=description)
-            if Laboratory.query.filter_by(name=name).first():
-                flash('Laboratorio Ya EXISTENTE ', 'warning')
-                return redirect(url_for('manage_labs'))
-            db.session.add(new_lab)
-            db.session.commit()
-            flash('Laboratory added successfully' , 'success')
-        labs = Laboratory.query.all()
-        return render_template('labs.html', labs=labs)
-    flash('Unauthorized access' , 'danger')
-    return redirect(url_for('home'))
+
 
 @app.route('/manage_profe', methods=['GET', 'POST'])
 @login_required
@@ -409,6 +434,73 @@ def change_user_details():
         db.session.rollback()
         flash(f'An error occurred: {str(e)}', 'danger')
     return redirect(url_for('manage_users'))
+
+@app.route('/upload_schedule', methods=['GET', 'POST'])
+@login_required
+@role_required('root', 'admin')
+def upload_schedule():
+    if request.method == 'POST':
+        file = request.files['file']
+        if file and file.filename.endswith('.xlsx'):
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
+            try:
+                # Leer el archivo Excel
+                df = pd.read_excel(filepath)
+
+                # Procesar los datos y guardarlos en la base de datos
+                for index, row in df.iterrows():
+                    lab_name = str(row['lab_name'])
+                    qr_code = str(row['qr_code'])
+                    date = row['date']
+                    start_time = row['start_time']
+                    end_time = row['end_time']
+
+                    # Convertir la fecha y las horas a cadenas si son objetos Timestamp
+                    date_str = date.strftime('%Y-%m-%d') if isinstance(date, pd.Timestamp) else str(date)
+                    start_time_str = start_time.strftime('%H:%M:%S') if isinstance(start_time, pd.Timestamp) else str(start_time)
+                    end_time_str = end_time.strftime('%H:%M:%S') if isinstance(end_time, pd.Timestamp) else str(end_time)
+
+                    # Convertir las cadenas a los formatos correctos
+                    date_converted = datetime.strptime(date_str, '%Y-%m-%d').date()
+                    start_time_converted = datetime.strptime(start_time_str, '%H:%M:%S').time()
+                    end_time_converted = datetime.strptime(end_time_str, '%H:%M:%S').time()
+
+                    # Verificar si el laboratorio existe
+                    lab = Laboratory.query.filter_by(name=lab_name).first()
+                    if not lab:
+                        flash(f'Laboratorio {lab_name} no encontrado', 'warning')
+                        continue
+
+                    # Verificar si el profesor existe
+                    profe = Profe.query.filter_by(qr_code=qr_code).first()
+                    if not profe:
+                        # Crear un nuevo profesor con nombre 'None'
+                        profe = Profe(username='None', qr_code=qr_code)
+                        db.session.add(profe)
+                        db.session.commit()
+                        flash(f'Código QR {qr_code} no encontrado, se ha creado un profesor con nombre "None"', 'warning')
+
+                    # Crear un nuevo horario
+                    new_schedule = Schedule(
+                        lab_id=lab.id,
+                        profe_id=profe.id,
+                        date=date_converted,
+                        start_time=start_time_converted,
+                        end_time=end_time_converted
+                    )
+                    db.session.add(new_schedule)
+                db.session.commit()
+                flash('Horarios cargados exitosamente', 'success')
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Ocurrió un error al procesar el archivo: {str(e)}', 'danger')
+                print(e)
+            return redirect(url_for('manage_schedule'))
+        else:
+            flash('Por favor, suba un archivo Excel válido', 'warning')
+    return render_template('upload_schedule.html')
 
 @app.errorhandler(404)
 def page_not_found(e):

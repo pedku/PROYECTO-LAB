@@ -4,32 +4,41 @@
 
 {% block content %}
 <div class="container my-5 " > 
-    <table id="dataTable_viewer" class="table table-striped">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Laboratorio</th>
-                <th>Profesor</th>
-                <th>Fecha</th>
-                <th>Hora de Inicio</th>
-                <th>Hora de Fin</th>
-
-            </tr>
-        </thead>
-        <tbody>
-            {% for schedule in schedules %}
-            <tr>
-                <td>{{ schedule.id }}</td>
-                <td>{{ schedule.lab.name }}</td>
-                <td>{{ schedule.professor.username }}</td>
-                <td>{{ schedule.date }}</td>
-                <td>{{ schedule.start_time }}</td>
-                <td>{{ schedule.end_time }}</td>
+    <div class="container my-5">
+       
+                <h1 class="text-center">Horario</h1>
+       
+    </div>
+    <div class="container my-5">
+        
+                <div class="table-responsive">
+                    <table id="dataTable_viewer" class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Laboratorio</th>
+                                <th>Profesor</th>
+                                <th>Fecha</th>
+                                <th>Hora de Inicio</th>
+                                <th>Hora de Fin</th>
                 
-                  
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for schedule in schedules %}
+                            <tr>
+                                <td>{{ schedule.id }}</td>
+                                <td>{{ schedule.lab.name }}</td>
+                                <td>{{ schedule.professor.username }}</td>
+                                <td>{{ schedule.date }}</td>
+                                <td>{{ schedule.start_time }}</td>
+                                <td>{{ schedule.end_time }}</td>
+                                
+                                  
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+    
 </div>
 {% endblock %}
