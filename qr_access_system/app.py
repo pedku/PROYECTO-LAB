@@ -22,8 +22,8 @@ app.secret_key = os.getenv('SECRET_KEY', 'default_secret_key')
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-#app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv( 'DATABASE_URL', 'postgresql://postgres:Pc200172@localhost/laboratorios_db')
-app.config['SQLALCHEMY_DATABASE_URI'] =  'postgresql://postgres:Pc2001@localhost/laboratorios_db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv( 'DATABASE_URL', 'postgresql://postgres:Pc200172@localhost/laboratorios_db')
+#app.config['SQLALCHEMY_DATABASE_URI'] =  'postgresql://postgres:Pc2001@localhost/laboratorios_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 UPLOAD_FOLDER = 'uploads'
@@ -312,50 +312,7 @@ def edit_user():
 @role_required('root', 'admin')
 def manage_schedule():
     try:
-
         if request.method == 'POST':
-            def validar_horario():
-                lab_id = request.form['lab_id']
-                profe_id = request.form['profe_id']
-                date = request.form['date']
-                start_time = request.form['start_time']
-                end_time = request.form['end_time']
-                date_converted = datetime.strptime(date, '%Y-%m-%d').date()
-              
-                # Verificar si el profesor ya está asignado a una clase en el mismo horario
-                existing_schedule = Schedule.query.filter(
-                    Schedule.profe_id == profe_id,
-                    Schedule.date == date,
-                    Schedule.start_time < end_time,
-                    Schedule.end_time > start_time
-                    
-                ).first()
-
-                # Verificar si el laboratorio ya está asignado a una clase en el mismo horario
-                existing_schedule_lab = Schedule.query.filter(
-                    Schedule.lab_id == lab_id,
-                    Schedule.date == date,
-                    Schedule.start_time < end_time,
-                    Schedule.end_time > start_time
-                ).first()
-                if existing_schedule_lab:
-                    flash('El laboratorio ya está asignado a una clase en el mismo horario', 'warning')
-                    return redirect(url_for('manage_schedule'))
-                
-                # Verificar si la fecha es anterior a la fecha actual
-                if date_converted < datetime.now(COLOMBIA_TZ).date():
-                    flash('La fecha no puede ser anterior a la fecha actual', 'warning')
-                    return redirect(url_for('manage_schedule'))
-              
-                # Verificar si la hora de finalización es mayor que la hora de inicio
-                if end_time <= start_time:
-                    flash('La hora de finalización debe ser mayor que la hora de inicio', 'warning')
-                    return redirect(url_for('manage_schedule'))
-              
-                # Verificar si el laboratorio ya está asignado a una clase en el mismo horario
-                if existing_schedule:
-                    flash('El profesor ya está asignado a una clase en el mismo horario', 'warning')
-                    return redirect(url_for('manage_schedule'))
             action = request.form.get('action')
             if action == 'add':
                 lab_id = request.form['lab_id']
@@ -404,19 +361,66 @@ def manage_schedule():
                 new_schedule = Schedule(lab_id=lab_id, profe_id=profe_id, date=date, start_time=start_time, end_time=end_time)
                 db.session.add(new_schedule)
                 db.session.commit()
-                flash('Operation successful', 'success')
+                flash('Horario AGREGADO', 'success')
             elif action == 'delete':
-                schedule_id = request.form['schedule_id']
-                Schedule.query.filter_by(id=schedule_id).delete()
+               schedule_id = request.form['schedule_id']
+               Schedule.query.filter_by(id=schedule_id).delete()
+               db.session.commit()
+               flash('Horario Eliminado Exitosamente', 'success')
             elif action == 'edit':
+                lab_id = request.form['lab_id']
+                profe_id = request.form['profe_id']
+                date = request.form['date']
+                start_time = request.form['start_time']
+                end_time = request.form['end_time']
+                date_converted = datetime.strptime(date, '%Y-%m-%d').date()
                 schedule_id = request.form['schedule_id']
-                schedule = Schedule.query.get(schedule_id)
+                schedule = db.session.get(Schedule, schedule_id)
 
-                schedule.lab_id = request.form['lab_id']
-                schedule.profe_id = request.form['profe_id']
-                schedule.date = request.form['date']
-                schedule.start_time = request.form['start_time']
-                schedule.end_time = request.form['end_time']
+                # Verificar si el profesor ya está asignado a una clase en el mismo horario
+                existing_schedule = Schedule.query.filter(
+                    Schedule.profe_id == profe_id,
+                    Schedule.date == date,
+                    Schedule.start_time < end_time,
+                    Schedule.end_time > start_time,
+                    Schedule.id != schedule_id  # Excluir el horario actual
+                ).first()
+
+                # Verificar si el laboratorio ya está asignado a una clase en el mismo horario
+                existing_schedule_lab = Schedule.query.filter(
+                    Schedule.lab_id == lab_id,
+                    Schedule.date == date,
+                    Schedule.start_time < end_time,
+                    Schedule.end_time > start_time,
+                    Schedule.id != schedule_id  # Excluir el horario actual
+                ).first()
+                if existing_schedule_lab:
+                    flash('El laboratorio ya está asignado a una clase en el mismo horario', 'warning')
+                    return redirect(url_for('manage_schedule'))
+                
+                # Verificar si la fecha es anterior a la fecha actual
+                if date_converted < datetime.now(COLOMBIA_TZ).date():
+                    flash('La fecha no puede ser anterior a la fecha actual', 'warning')
+                    return redirect(url_for('manage_schedule'))
+              
+                # Verificar si la hora de finalización es mayor que la hora de inicio
+                if end_time <= start_time:
+                    flash('La hora de finalización debe ser mayor que la hora de inicio', 'warning')
+                    return redirect(url_for('manage_schedule'))
+              
+                # Verificar si el laboratorio ya está asignado a una clase en el mismo horario
+                if existing_schedule:
+                    flash('El profesor ya está asignado a una clase en el mismo horario', 'warning')
+                    return redirect(url_for('manage_schedule'))
+
+                # Actualizar el horario en la base de datos
+                schedule.lab_id = lab_id
+                schedule.profe_id = profe_id
+                schedule.date = date
+                schedule.start_time = start_time
+                schedule.end_time = end_time
+                db.session.commit()
+                flash('Schedule updated successfully', 'success')
             db.session.commit()
     except Exception as e:
         db.session.rollback()
