@@ -7,23 +7,30 @@
 <h2 class="centered">Registros de Acceso</h2>
 <div class=" border container my-5" style="overflow-x:auto;">
 <table id="dataTable_logs" class="table table-striped">
-    <thead>
+    <thead class="centered">
         <tr>
-            <th>ID</th>
-            <th>Profesor</th>
-            <th>QR</th>
-            <th>Laboratorio</th>
-            <th>HORA DE INGRESO</th>
+            <th class="centered">ID</th>
+            <th class="centered">Profesor</th>
+            <th class="centered">QR</th>
+            <th class="centered">Laboratorio</th>
+            <th class="centered">HORA DE INGRESO</th>
+            <th class="centered">Acciones</th>
         </tr>
     </thead>
-    <tbody>
+    <tbody >
         {% for log in logs %}
-            <tr>
-                <td>{{ log.id }}</td>
-                <td>{{ log.professor.username }}</td>
-                <td>{{log.professor.qr_code}}</td>
-                <td>{{ log.lab.name }}</td>
-                <td>{{ log.timestamp }}</td>
+            <tr  >
+                <td class="centered">{{ log.id }}</td>
+                <td class="centered">{{ log.professor.username }}</td>
+                <td class="centered">{{ log.professor.qr_code }}</td>
+                <td class="centered">{{ log.lab.name }} - {{ log.lab.description }}</td>
+                <td class="centered">{{ log.timestamp }}</td>
+                <td class="centered">
+                    <form action="{{ url_for('delete_log') }}" method="POST" onsubmit="return confirm('¿Estás seguro de que deseas eliminar este registro?');">
+                        <input type="hidden" name="log_id" value="{{ log.id }}">
+                        <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                    </form>
+                </td>
             </tr>
         {% endfor %}
     </tbody>

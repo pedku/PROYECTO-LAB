@@ -22,8 +22,8 @@ app.secret_key = os.getenv('SECRET_KEY', 'default_secret_key')
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv( 'DATABASE_URL', 'postgresql://postgres:Pc200172@localhost/laboratorios_db')
-#app.config['SQLALCHEMY_DATABASE_URI'] =  'postgresql://postgres:Pc200172@localhost/laboratorios_db'
+#app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv( 'DATABASE_URL', 'postgresql://postgres:Pc200172@localhost/laboratorios_db')
+app.config['SQLALCHEMY_DATABASE_URI'] =  'postgresql://postgres:Pc2001@localhost/laboratorios_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 UPLOAD_FOLDER = 'uploads'
@@ -44,6 +44,8 @@ COLOMBIA_TZ = pytz.timezone('America/Bogota')
 
 #csrf.init_app(app)
 
+
+# Función decoradora para requerir inicio de sesión
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -52,6 +54,7 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+# Función decoradora para requerir roles específicos
 def role_required(*roles):
     def decorator(f):
         @wraps(f)
@@ -63,13 +66,17 @@ def role_required(*roles):
         return decorated_function
     return decorator
 
-# Models
+# Modelos de la base de datos
+
+
+# Modelo para los profesores
 class Profe(db.Model):
     __tablename__ = 'profes'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(200), nullable=False)
     qr_code = db.Column(db.String(200), nullable=False, unique=True)
-    
+
+# Modelo de usuario    
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
@@ -77,12 +84,14 @@ class User(db.Model):
     password_hash = db.Column(db.String(200), nullable=False)
     role = db.Column(db.String(20), nullable=False)  # 'root', 'admin', 'viewer'
 
+# Modelo para los laboratorios
 class Laboratory(db.Model):
     __tablename__ = 'laboratories'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False, unique=True) 
     description = db.Column(db.String(255))
 
+# Modelo para los horarios de las clases
 class Schedule(db.Model):
     __tablename__ = 'schedules'
     id = db.Column(db.Integer, primary_key=True)
@@ -94,6 +103,7 @@ class Schedule(db.Model):
     start_time = db.Column(db.Time, nullable=False)
     end_time = db.Column(db.Time, nullable=False)
 
+# Modelo para los registros de acceso
 class AccessLog(db.Model):
     __tablename__ = 'access_logs'
     id = db.Column(db.Integer, primary_key=True)
@@ -103,6 +113,7 @@ class AccessLog(db.Model):
     professor = db.relationship('Profe', backref='access_logs')
     lab = db.relationship('Laboratory', backref='access_logs')
 
+# Crear usuario inicial
 def create_initial_user():
     if not User.query.filter_by(username='root').first():
         password_hash = generate_password_hash('1234')
@@ -111,14 +122,16 @@ def create_initial_user():
         db.session.commit()
         print("Usuario root creado")
 
-# Routes
+# Ruta principal
 @app.route('/')
 def home():
     if 'user_id' in session:
-        user = User.query.get(session['user_id'])
+        user = db.session.get(User, session['user_id'])  # Actualizado a Session.get()
         return render_template('dashboard.html', user=user)
     return redirect(url_for('login'))
 
+
+# Ruta de inicio de sesión
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -131,19 +144,20 @@ def login():
             return redirect(url_for('home'))
     return render_template('login.html')
 
+# Ruta de cierre de sesión
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('login'))
 
-#RUTA HORARIO VIEWER
+# Ruta para ver el horario (solo usuarios autenticados)
 @app.route('/horario', methods=['GET'])
 @login_required
 def horario():
     schedules = Schedule.query.all()
     return render_template('horario.html', schedules=schedules)
 
-#RUTA DE CREAR LABORATORIO - visualizar horarios en laboratorios
+# Ruta para gestionar laboratorios (solo usuarios root y admin)
 @app.route('/labs', methods=['GET', 'POST'])
 @login_required
 def manage_labs():
@@ -177,6 +191,8 @@ def laboratorio():
     labs = Laboratory.query.all()
     return render_template('laboratorio.html', labs=labs)
 """
+
+# Ruta para eliminar un laboratorio (solo usuarios root y admin)
 @app.route('/delete_lab', methods=['POST'])
 @login_required
 @role_required('root', 'admin')
@@ -194,6 +210,7 @@ def delete_lab():
     flash('Acceso no autorizado')
     return redirect(url_for('home'))
 
+# Ruta para cambiar los detalles de un laboratorio (solo usuarios root y admin)
 @app.route('/change_lab_details', methods=['POST'])
 @login_required
 @role_required('root', 'admin')
@@ -212,6 +229,7 @@ def change_lab_details():
     flash('Acceso no autorizado')
     return redirect(url_for('home'))
 
+# Ruta para gestionar usuarios (solo usuarios root)
 @app.route('/manage_users', methods=['GET', 'POST'])
 @login_required
 @role_required('root')
@@ -240,7 +258,7 @@ def manage_users():
     return render_template('users.html', users=users)
 
 
-
+# Ruta para gestionar profesores (solo usuarios root y admin)
 @app.route('/manage_profe', methods=['GET', 'POST'])
 @login_required
 @role_required('root', 'admin')
@@ -269,6 +287,7 @@ def manage_profe():
     users = Profe.query.all()
     return render_template('manage_users.html', users=users)
 
+# Ruta para editar un profesor (solo usuarios root y admin)
 @app.route('/edit_user', methods=['POST'])
 @login_required
 @role_required('root', 'admin')
@@ -286,6 +305,8 @@ def edit_user():
         flash(f'An error occurred: {str(e)}', 'danger')
     return redirect(url_for('manage_profe'))
 
+
+# Ruta para gestionar horarios (solo usuarios root y admin)
 @app.route('/manage_schedule', methods=['GET', 'POST'])
 @login_required
 @role_required('root', 'admin')
@@ -361,17 +382,44 @@ def manage_schedule():
     schedules = Schedule.query.all()
     return render_template('schedule.html', labs=labs, profes=profes, schedules=schedules)
 
+
+# Ruta para ver los registros de acceso (solo usuarios root y admin)
 @app.route('/logs')
 @login_required
 @role_required('root', 'admin')
 def view_logs():
     try:
-        logs = AccessLog.query.all()
+        logs = AccessLog.query.options(
+            db.joinedload(AccessLog.professor),
+            db.joinedload(AccessLog.lab)
+        ).all()
         return render_template('logs.html', logs=logs)
     except Exception as e:
+        print(e)
         flash(f'An error occurred: {str(e)}', 'danger')
         return redirect(url_for('home'))
 
+# Ruta para eliminar un registro de acceso (solo usuarios root y admin)   
+@app.route('/delete_log', methods=['POST'])
+@login_required
+@role_required('root', 'admin')
+def delete_log():
+    try:
+        log_id = request.form['log_id']
+        log = db.session.get(AccessLog, log_id)  # Actualizado a Session.get()
+        if log:
+            db.session.delete(log)
+            db.session.commit()
+            flash('Registro eliminado exitosamente', 'success')
+        else:
+            flash('Registro no encontrado', 'danger')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Ocurrió un error: {str(e)}', 'danger')
+    return redirect(url_for('view_logs'))
+
+
+# Ruta para validar un código QR
 @app.route('/qr', methods=['POST'])
 def validate_qr():
     try:
@@ -381,6 +429,7 @@ def validate_qr():
         qr_code = data.get('qr')
         current_time = datetime.now(COLOMBIA_TZ).time()
         current_date = datetime.now(COLOMBIA_TZ).date()
+        print(current_date)
         
         print(f"lab_name: {lab_name}, qr_code: {qr_code}, current_time: {current_time}, current_date: {current_date}")
         
@@ -401,6 +450,7 @@ def validate_qr():
 
         if schedule:
             print(f"Schedule found: {schedule.id}")
+
             logs = AccessLog(profe_id=profe.id, lab_id=schedule.lab_id, timestamp=datetime.now(COLOMBIA_TZ).strftime('%Y-%m-%d %H:%M'))
             db.session.add(logs)
             db.session.commit()
@@ -412,6 +462,8 @@ def validate_qr():
         print(f"An error occurred: {str(e)}")
         return jsonify({'status': 'error', 'message': f'An error occurred: {str(e)}'})
 
+
+# Ruta para cambiar los detalles de un usuario (solo usuarios root)
 @app.route('/change_user_details', methods=['POST'])
 @login_required
 @role_required('root')
@@ -421,7 +473,7 @@ def change_user_details():
         username = request.form['username']
         new_password = request.form['new_password']
         
-        user = User.query.get(user_id)
+        user = db.session.get(User, user_id)  # Actualizado a Session.get()
         if user:
             user.username = username
             if new_password:
@@ -435,6 +487,8 @@ def change_user_details():
         flash(f'An error occurred: {str(e)}', 'danger')
     return redirect(url_for('manage_users'))
 
+
+# Ruta para subir un horario desde un archivo Excel (solo usuarios root y admin)
 @app.route('/upload_schedule', methods=['GET', 'POST'])
 @login_required
 @role_required('root', 'admin')
@@ -510,10 +564,13 @@ def upload_schedule():
 
 
 
+
+# RUTA DE EROR 404
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404
 
+#RUTA DE ERROR 500
 @app.errorhandler(500)
 def internal_server_error(e):
     return render_template('500.html'), 500

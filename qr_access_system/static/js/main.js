@@ -73,7 +73,8 @@ const HorarioOptions_viewer = {
     //scrollX: "2000px",
     lengthMenu: [5, 10, 15, 20, 100, 200, 500],
     columnDefs: [
-        { className: "centered", targets: [0, 1, 2, 3, 4, 5] }
+        { className: "centered", targets: [0, 1, 2, 3, 4, 5] },
+        
         //{ width: "50%", targets: [0] }
     ],
     pageLength: 10,
@@ -127,10 +128,13 @@ const logsOptions = {
     //scrollX: "2000px",
     lengthMenu: [5, 10, 15, 20, 100, 200, 500],
     columnDefs: [
-        { className: "centered", targets: [0, 1, 2] }
+        { className: "centered", targets: [0, 1, 2,3,4,5] },
+        { orderable: false, targets: [5,2] },
+        { searchable: false, targets: [5] }
 
         //{ width: "50%", targets: [0] }
     ],
+    
     pageLength: 10,
     destroy: true,
     language: {
