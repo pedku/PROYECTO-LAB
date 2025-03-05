@@ -95,10 +95,10 @@ class Laboratory(db.Model):
 class Schedule(db.Model):
     __tablename__ = 'schedules'
     id = db.Column(db.Integer, primary_key=True)
-    lab_id = db.Column(db.Integer, db.ForeignKey('laboratories.id'), nullable=False)
+    lab_id = db.Column(db.Integer, db.ForeignKey('laboratories.id', ondelete='CASCADE'), nullable=False)
     profe_id = db.Column(db.Integer, db.ForeignKey('profes.id'), nullable=False)
     professor = db.relationship('Profe', backref='schedules')
-    lab = db.relationship('Laboratory', backref='schedules')
+    lab = db.relationship('Laboratory', backref=db.backref('schedules', cascade='all, delete-orphan'))
     date = db.Column(db.Date, nullable=False)
     start_time = db.Column(db.Time, nullable=False)
     end_time = db.Column(db.Time, nullable=False)
@@ -108,10 +108,10 @@ class AccessLog(db.Model):
     __tablename__ = 'access_logs'
     id = db.Column(db.Integer, primary_key=True)
     profe_id = db.Column(db.Integer, db.ForeignKey('profes.id'), nullable=False)
-    lab_id = db.Column(db.Integer, db.ForeignKey('laboratories.id'), nullable=False)
+    lab_id = db.Column(db.Integer, db.ForeignKey('laboratories.id', ondelete='CASCADE'), nullable=False)
     timestamp = db.Column(db.DateTime, default=lambda: datetime.now(COLOMBIA_TZ))
     professor = db.relationship('Profe', backref='access_logs')
-    lab = db.relationship('Laboratory', backref='access_logs')
+    lab = db.relationship('Laboratory', backref=db.backref('access_logs', cascade='all, delete-orphan'))
 
 # Crear usuario inicial
 def create_initial_user():
