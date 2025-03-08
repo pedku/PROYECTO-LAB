@@ -22,8 +22,8 @@ app.secret_key = os.getenv('SECRET_KEY', 'default_secret_key')
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv( 'DATABASE_URL', 'postgresql://postgres:Pc200172@localhost/laboratorios_db')
-#app.config['SQLALCHEMY_DATABASE_URI'] =  'postgresql://postgres:Pc2001@localhost/laboratorios_db'
+#app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv( 'DATABASE_URL', 'postgresql://postgres:Pc200172@localhost/laboratorios_db')
+app.config['SQLALCHEMY_DATABASE_URI'] =  'postgresql://postgres:Pc200172@localhost/laboratorios_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 UPLOAD_FOLDER = 'uploads'
@@ -96,8 +96,8 @@ class Schedule(db.Model):
     __tablename__ = 'schedules'
     id = db.Column(db.Integer, primary_key=True)
     lab_id = db.Column(db.Integer, db.ForeignKey('laboratories.id', ondelete='CASCADE'), nullable=False)
-    profe_id = db.Column(db.Integer, db.ForeignKey('profes.id'), nullable=False)
-    professor = db.relationship('Profe', backref='schedules')
+    profe_id = db.Column(db.Integer, db.ForeignKey('profes.id', ondelete='CASCADE'), nullable=False)
+    professor = db.relationship('Profe', backref=db.backref('schedules', cascade='all, delete-orphan'))
     lab = db.relationship('Laboratory', backref=db.backref('schedules', cascade='all, delete-orphan'))
     date = db.Column(db.Date, nullable=False)
     start_time = db.Column(db.Time, nullable=False)
@@ -107,10 +107,10 @@ class Schedule(db.Model):
 class AccessLog(db.Model):
     __tablename__ = 'access_logs'
     id = db.Column(db.Integer, primary_key=True)
-    profe_id = db.Column(db.Integer, db.ForeignKey('profes.id'), nullable=False)
+    profe_id = db.Column(db.Integer, db.ForeignKey('profes.id', ondelete='CASCADE'), nullable=False)
     lab_id = db.Column(db.Integer, db.ForeignKey('laboratories.id', ondelete='CASCADE'), nullable=False)
     timestamp = db.Column(db.DateTime, default=lambda: datetime.now(COLOMBIA_TZ))
-    professor = db.relationship('Profe', backref='access_logs')
+    professor = db.relationship('Profe', backref=db.backref('access_logs', cascade='all, delete-orphan'))
     lab = db.relationship('Laboratory', backref=db.backref('access_logs', cascade='all, delete-orphan'))
 
 # Crear usuario inicial
@@ -278,12 +278,16 @@ def manage_profe():
                 db.session.add(new_user)
             elif action == 'delete':
                 user_id = request.form['user_id']
+                # Eliminar primero las referencias en la tabla schedules y access_logs
+                Schedule.query.filter_by(profe_id=user_id).delete()
+                AccessLog.query.filter_by(profe_id=user_id).delete()
                 Profe.query.filter_by(id=user_id).delete()
             db.session.commit()
             flash('Operación exitosa', 'success')
     except Exception as e:
         db.session.rollback()
         flash(f'Ocurrió un error: {str(e)}', 'danger')
+        print(e)
     users = Profe.query.all()
     return render_template('manage_users.html', users=users)
 
