@@ -1,3 +1,70 @@
+body {
+    display: flex;
+}
+.sidebar {
+    width: 250px;
+    height: 100vh;
+    background-color: #1D2840;
+    position: fixed;
+    top: 60px; /* Ajuste para que no quede tapado por el encabezado */
+    left: 0;
+    padding-top: 40px;
+    transition: transform 0.3s ease;
+}
+.sidebar.hidden {
+    transform: translateX(-100%);
+}
+.sidebar a {
+    color: white;
+    padding: 15px;
+    text-decoration: none;
+    display: block;
+}
+.sidebar a:hover {
+    background-color: #495057 ;
+}
+.content {
+    margin-left: 250px;
+    padding: 20px;
+    width: 100%;
+    transition: margin-left 0.3s ease;
+}
+.content.expanded {
+    margin-left: 0;
+}
+.sidebar .nav-item .nav-link.active {
+    background-color: #213140;
+}
+.hamburger-btn {
+    background-color: transparent;
+    border: none;
+    color: #1D2840;
+    padding: 10px;
+    cursor: pointer;
+    margin-right: 10px;
+}
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    transition: left 0.3s ease;
+}
+.header.expanded {
+    left: 0;
+}
+.header .logo img {
+    max-width: 150px;
+    height: auto;
+}
+
 /* Estilo para la barra de navegación */
 .navbar {
     background-color: #a42d2d; /* Fondo blanco */
@@ -13,7 +80,7 @@
 }
 
 .nav-link:hover {
-    color: #007bff; /* Color azul al pasar el ratón */
+    color: #F2D22E !important; /* Color azul al pasar el ratón */
 }
 
 /* Estilo para el menú desplegable */
