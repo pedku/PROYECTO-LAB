@@ -115,9 +115,9 @@ class AccessLog(db.Model):
 
 # Crear usuario inicial
 def create_initial_user():
-    if not User.query.filter_by(username='root').first():
+    if not User.query.filter_by(username='@root').first():
         password_hash = generate_password_hash('1234')
-        root_user = User(username='root', password_hash=password_hash, role='root')
+        root_user = User(username='@root', password_hash=password_hash, role='root')
         db.session.add(root_user)
         db.session.commit()
         print("Usuario root creado")
