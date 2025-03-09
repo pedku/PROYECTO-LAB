@@ -1,6 +1,19 @@
 body {
     display: flex;
 }
+.modal_titulo{
+    background-color: #1D2840;
+    color: white;
+}
+.margin_top{
+    margin-top: 7rem;
+}
+
+.centered{
+    text-align: center !important;
+    vertical-align: middle !important;
+
+}
 .sidebar {
     width: 250px;
     height: 100vh;
