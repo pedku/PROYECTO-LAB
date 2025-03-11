@@ -21,7 +21,7 @@
                 <label for="profe_id">Profesor</label>
                 <select class="form-control" id="profe_id" name="profe_id" required>
                     {% for profe in profes %}
-                    <option value="{{ profe.id }}">{{ profe.username }}</option>
+                    <option value="{{ profe.id }}">{{ profe.name }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -57,7 +57,7 @@
                 <tr>
                     <td>{{ schedule.id }}</td>
                     <td>{{ schedule.lab.name }}</td>
-                    <td>{{ schedule.professor.username }}</td>
+                    <td>{{ schedule.professor.name }}</td>
                     <td>{{ schedule.date }}</td>
                     <td>{{ schedule.start_time }}</td>
                     <td>{{ schedule.end_time }}</td>

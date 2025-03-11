@@ -14,9 +14,11 @@
                 <input type="text" class="form-control" id="name" name="name" required>
             </div>
             <div class="mb-3">
-                <label for="qr_code" class="form-label">Código QR:</label>
+                <label for="qr_code" class="form-label">Identificacion:</label>
                 <input type="text" class="form-control" id="qr_code" name="qr_code" required>
             </div>
+            
+               
             <button type="submit" class="btn btn-success">Agregar Usuario</button>
         </form>
         <h2>Usuarios Existentes</h2>
@@ -25,15 +27,17 @@
                 <tr>
                     <th>ID</th>
                     <th>Nombre</th>
-                    <th>Código QR</th>
+                    <th>Usuario</th>
+                    <th>Identificacion</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
-                {% for user in users %}
+                {% for user in profes %}
                 <tr>
                     <td>{{ user.id }}</td>
-                    <td>{{ user.username }}</td>
+                    <td>{{ user.name }}</td>
+                    <td>{{ user.user.username}}</td>
                     <td>{{ user.qr_code }}</td>
                     <td>
                         <form method="POST" style="display:inline;">
@@ -50,7 +54,6 @@
     </div>
 
     <!-- Modal -->
-     {}
     <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">

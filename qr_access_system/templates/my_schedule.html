@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Horarios del Profesor{% endblock %}
+
+{% block content %}
+<div class="container margin_top">
+    <h1 class="text-center">Horarios del Profesor</h1>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Laboratorio</th>
+                <th>Fecha</th>
+                <th>Hora de Inicio</th>
+                <th>Hora de Fin</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for schedule in schedules %}
+            <tr>
+                <td>{{ schedule.lab.name }}</td>
+                <td>{{ schedule.date }}</td>
+                <td>{{ schedule.start_time }}</td>
+                <td>{{ schedule.end_time }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

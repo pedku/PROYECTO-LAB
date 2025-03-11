@@ -1,31 +1,41 @@
 {% extends "base.html" %}
 
-{% block title %}Manage Users{% endblock %}
+{% block title %}Gestionar Usuarios{% endblock %}
 
 {% block content %}
 <div class="container margin_top">
-    <h1 class="text-center">Manage Users</h1>
-    <form method="POST" action="{{ url_for('manage_users') }}">
+    <h1 class="text-center">Gestionar Usuarios</h1>
+    <form method="POST" class="my-4">
         <input type="hidden" name="action" value="add">
-        <div class="form-group">
-            <label for="username">Nombre de Usuario</label>
+        <div class="mb-3">
+            <label for="username" class="form-label">Nombre de Usuario:</label>
             <input type="text" class="form-control" id="username" name="username" required>
         </div>
-        <div class="form-group">
-            <label for="password">Contraseña</label>
+        <div class="mb-3">
+            <label for="password" class="form-label">Contraseña:</label>
             <input type="password" class="form-control" id="password" name="password" required>
         </div>
-        <div class="form-group">
-            <label for="role">Rol</label>
+        <div class="mb-3">
+            <label for="role" class="form-label">Rol:</label>
             <select class="form-control" id="role" name="role" required>
-                <option value="admin">Admin</option>
-                <option value="viewer">Viewer</option>
+                <option value="root" id="op_root">Root</option>
+                <option value="admin" id="op_admin">Admin</option>
+                <option value="viewer" id="op_viewer">Viewer</option>
+                <option value="profe" id="op_profe">Profe</option>
             </select>
         </div>
-        <button type="submit" class="btn btn-primary">Añadir Usuario</button>
+        
+        <div class="mb-3" id="profe_div" style="display: none;">
+            <label for="name" class="form-label">Nombre Profesor:</label>
+            <input type="text" class="form-control" id="name" name="name" required>
+        </div>
+        <div class="mb-3" id="qr_code_div" style="display: none;">
+            <label for="qr_code" class="form-label">Código QR:</label>
+            <input type="text" class="form-control" id="qr_code" name="qr_code" required>
+        </div>
+        <button type="submit" class="btn btn-success">Agregar Usuario</button>
     </form>
-    <div class="mt-5">
-        <h2>Lista de Usuarios</h2>
+    <h2>Usuarios Existentes</h2>
     <table id="dataTable_usuarios" class="table table-striped mt-5">
         <thead>
             <tr>
@@ -48,14 +58,12 @@
                     <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#editModal{{ user.id }}"><i class="fa-solid fa-pen-to-square"></i></button>
                     </div>
                         {% else %}
-                        <div class="d-inline">
-                            <form method="POST" action="{{ url_for('manage_users') }}" style="display:inline;">
-                                <input type="hidden" name="action" value="delete">
-                                <input type="hidden" name="user_id" value="{{ user.id }}">
-                                <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-trash-can"></i></button>
-                            </form>
-                            <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#editModal{{ user.id }}"><i class="fa-solid fa-pen-to-square"></i></button>
-                        </div>
+                    <form method="POST" style="display:inline;">
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="user_id" value="{{ user.id }}">
+                        <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-trash-can"></i></button>
+                    </form>
+                    <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#editModal{{ user.id }}"><i class="fa-solid fa-pen-to-square"></i></button>
                     {% endif %}
                 </td>
             </tr>
@@ -63,8 +71,8 @@
         </tbody>
     </table>
 </div>
-</div>
 
+<!-- Modal -->
 <!-- Edit Modal -->
 {% for user in users %}
 <div class="modal fade" id="editModal{{ user.id }}" tabindex="-1" role="dialog" aria-labelledby="editModalLabel{{ user.id }}" aria-hidden="true">
@@ -97,8 +105,43 @@
     </div>
 </div>
 {% endfor %}
-{% endblock %}
+
 
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+    $('#role').on('change', function() {
+        if (this.value === 'profe') {
+            $('#qr_code_div').show();
+            $('#profe_div').show();
+        } else {
+            $('#qr_code_div').hide();
+            $('#profe_div').hide();
+            $('#name').removeAttr('required');
+            $('#qr_code').removeAttr('required');
+            
+        }
+    
+    });
+
+    $('#editModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget) // Botón que activó el modal
+        var id = button.data('id')
+        var username = button.data('username')
+        var role = button.data('role')
+        var qr_code = button.data('qrcode')
+
+        var modal = $(this)
+        modal.find('.modal-body #editUserId').val(id)
+        modal.find('.modal-body #editUsername').val(username)
+        modal.find('.modal-body #editUserIdPassword').val(id)
+        if (role === 'profe') {
+            modal.find('.modal-body #editQrCodeDiv').show()
+            modal.find('.modal-body #editQrCode').val(qr_code)
+        } else {
+            modal.find('.modal-body #editQrCodeDiv').hide()
+        }
+    })
+</script>
+{% endblock %}

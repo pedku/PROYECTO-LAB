@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Perfil del Profesor{% endblock %}
+
+{% block content %}
+<div class="container margin_top">
+    <h1 class="text-center">Perfil del Profesor</h1>
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">{{ user.username }}</h5>
+            <p class="card-text">Código QR: {{ profe.qr_code }}</p>
+            <a href="{{ url_for('my_qr') }}" class="btn btn-primary">Ver Carnet</a>
+            <a href="{{ url_for('my_schedule') }}" class="btn btn-secondary">Ver Horarios</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

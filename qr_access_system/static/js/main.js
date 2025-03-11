@@ -16,8 +16,8 @@ const profesOptions = {
     lengthMenu: [5, 10, 15, 20, 100, 200, 500],
     columnDefs: [
         { className: "centered", targets: [0, 1, 2, 3] },
-        { orderable: false, targets: [3] },
-        { searchable: false, targets: [3] }
+        { orderable: false, targets: [4] },
+        { searchable: false, targets: [4] }
         //{ width: "50%", targets: [0] }
     ],
     pageLength: 10,
