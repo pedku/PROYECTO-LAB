@@ -641,7 +641,7 @@ def upload_schedule():
                     lab_name = str(row['Laboratorio'])
                     description = str(row['Descripcion'])
                     name_profe = str(row['Nombre'])
-                    qr_code = str(row['Identificacion'])
+                    qr_code = str(row['Identificacion']).rstrip('.0')  # Convertir a cadena y eliminar ".0" al final
                     date = row['Fecha']
                     start_time = row['Hora Inicio']
                     end_time = row['Hora Final']
