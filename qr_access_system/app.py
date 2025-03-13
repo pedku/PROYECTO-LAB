@@ -830,4 +830,4 @@ if __name__ == '__main__':
         db.create_all()
         create_initial_user()
        
-        app.run(debug=false )
+        app.run(debug=False )
