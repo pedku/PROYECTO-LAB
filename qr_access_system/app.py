@@ -128,6 +128,28 @@ def create_initial_user():
         db.session.commit()
         print("Usuario root creado")
 
+
+#Crea Nombres de usuario
+def Nombre (name):
+    first_name, last_name = name.split(' ', 2)[:2]
+                    
+    # Limpiar los datos del nombre de usuario
+    first_name = unidecode(first_name).lower()
+    last_name = unidecode(last_name).lower()
+    first_name = re.sub(r'[^a-z]', '', first_name)
+    last_name = re.sub(r'[^a-z]', '', last_name)
+    
+    base_username = f"@{first_name[0]}{last_name}"
+    username = base_username
+    counter = 1
+    while User.query.filter_by(username=username).first():
+        username = f"{base_username}{counter}"
+        counter += 1
+        
+    return username
+
+
+
 # Ruta principal
 @app.route('/')
 def home():
@@ -242,71 +264,64 @@ def change_lab_details():
 @login_required
 @role_required('root')
 def manage_users():
-    if request.method == 'POST':
-        action = request.form.get('action')
-        if action == 'add':
-            username = request.form['username']
-            password = request.form['password']
-            role = request.form['role']
-            
-            
-            existing_user = User.query.filter_by(username=username).first()
-            if existing_user:
-                flash('Nombre de usuario ya existente', 'warning')
-                return redirect(url_for('manage_users'))
-            if role == 'profe':
+    try:
+        if request.method == 'POST':
+            action = request.form.get('action')
+            #agrega nuevo usuario
+            if action == 'add':
                 name = request.form['name']
-                qr_code = request.form['qr_code']
-                existing_profe = Profe.query.filter_by(qr_code=qr_code).first()
-                if existing_profe:
-                    flash('El código QR ya existe', 'warning')
+                qr_code = request.form['identificacion']
+                role = request.form['role']
+                
+                username=Nombre(name)
+                password_hash = generate_password_hash(qr_code)
+                new_user = User(username=username, password_hash=password_hash, role=role)
+                db.session.add(new_user)
+                db.session.commit()  # Commit para obtener el ID del nuevo usuario
+                
+                #se crea un profesor si el nuevo usuario tiene role profe
+                if role == 'profe':   
+                    new_profe = Profe(name=name, qr_code=qr_code, user_id=new_user.id)
+                    db.session.add(new_profe)
+                    db.session.commit() 
+                flash('Usuario agregado exitosamente', 'success')
+                
+            # edita usuarios existentes   
+            elif action == 'edit':
+                user_id = request.form['user_id']
+                user = User.query.get(user_id)
+                if user:
+                    user.username = request.form['username']
+                    if user.role == 'profe':
+                        profe = Profe.query.filter_by(user_id=user_id).first()
+                        if profe:
+                            profe.name = request.form['name']
+                            profe.qr_code = request.form['qr_code']
+                    db.session.commit()
+                    flash('Usuario actualizado exitosamente', 'success')
+                else:
+                    flash('Usuario no encontrado', 'danger')
+            #Borrar usuario existente seleccionado       
+            elif action == 'delete':
+                user_id = request.form['user_id']
+                #No SE PERMITE BORRAR EL USUARIO @ROOT
+                if user_id == '1':
+                    flash('No puedes eliminar el usuario root', 'warning')
                     return redirect(url_for('manage_users'))
-
-                
-                
-            password_hash = generate_password_hash(password)
-            new_user = User(username=username, password_hash=password_hash, role=role)
-            db.session.add(new_user)
-            db.session.commit()  # Commit para obtener el ID del nuevo usuario
-            if role == 'profe':
-                
-                new_profe = Profe(name=name, qr_code=qr_code, user_id=new_user.id)
-                db.session.add(new_profe)
-                db.session.commit() 
-
-           
-            
-            flash('Usuario agregado exitosamente', 'success')
-        elif action == 'edit':
-            user_id = request.form['user_id']
-            user = User.query.get(user_id)
-            if user:
-                user.username = request.form['username']
-                if user.role == 'profe':
+                user = User.query.get(user_id)
+                if user:
+                    # Eliminar primero las referencias en la tabla profes
                     profe = Profe.query.filter_by(user_id=user_id).first()
                     if profe:
-                        profe.name = request.form['name']
-                        profe.qr_code = request.form['qr_code']
-                db.session.commit()
-                flash('Usuario actualizado exitosamente', 'success')
-            else:
-                flash('Usuario no encontrado', 'danger')
-        elif action == 'delete':
-            user_id = request.form['user_id']
-            if user_id == '1':
-                flash('No puedes eliminar el usuario root', 'warning')
-                return redirect(url_for('manage_users'))
-            user = User.query.get(user_id)
-            if user:
-                # Eliminar primero las referencias en la tabla profes
-                profe = Profe.query.filter_by(user_id=user_id).first()
-                if profe:
-                    db.session.delete(profe)
-                db.session.delete(user)
-                db.session.commit()
-                flash('Usuario eliminado exitosamente', 'success')
-            else:
-                flash('Usuario no encontrado', 'danger')
+                        db.session.delete(profe)
+                    db.session.delete(user)
+                    db.session.commit()
+                    flash('Usuario eliminado exitosamente', 'success')
+                else:
+                    flash('Usuario no encontrado', 'danger')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Ocurrió un error: {str(e)}', 'danger')      
     users = User.query.all()
     return render_template('users.html', users=users)
 
@@ -325,20 +340,7 @@ def manage_profe():
                 profe = Profe.query.filter_by(qr_code=qr_code).first()
                 if not profe:
                     # Crear un nuevo profesor y usuario
-                    first_name, last_name = name_profe.split(' ', 2)[:2]
-                    
-                    # Limpiar los datos del nombre de usuario
-                    first_name = unidecode(first_name).lower()
-                    last_name = unidecode(last_name).lower()
-                    first_name = re.sub(r'[^a-z]', '', first_name)
-                    last_name = re.sub(r'[^a-z]', '', last_name)
-                    
-                    base_username = f"@{first_name[0]}{last_name}"
-                    username = base_username
-                    counter = 1
-                    while User.query.filter_by(username=username).first():
-                        username = f"{base_username}{counter}"
-                        counter += 1
+                    username = Nombre (name_profe)
 
                     password_hash = generate_password_hash(qr_code)
                     new_user = User(username=username, password_hash=password_hash, role='profe')
@@ -644,6 +646,32 @@ def upload_schedule():
                     start_time = row['Hora Inicio']
                     end_time = row['Hora Final']
 
+                    # Manejar valores faltantes
+                    if lab_name == 'nan':
+                        lab_name = 'None'
+                        flash(f'Laboratorio no especificado en la fila {index + 1}, se ha asignado "None"', 'warning')
+                    if name_profe == 'nan':
+                        name_profe = 'None'
+                        flash(f'Nombre del profesor no especificado en la fila {index + 1}, se ha asignado "None"', 'warning')
+                    if qr_code == 'nan':
+                        qr_code = '0123456789'
+                        flash(f'Identificación no especificada para el profesor {name_profe} en la fila {index + 1}, se ha asignado "0123456789"', 'warning')
+                    if pd.isnull(date) or pd.isnull(start_time) or pd.isnull(end_time):
+                        flash(f'Fechas u horas no especificadas para el profesor {name_profe} en la fila {index + 1}, se ha creado el usuario pero no se ha asignado un horario', 'warning')
+                        # Crear el usuario y profesor si no existen
+                        profe = Profe.query.filter_by(qr_code=qr_code).first()
+                        if not profe:
+                            username = Nombre(name_profe)
+                            password_hash = generate_password_hash(qr_code)
+                            new_user = User(username=username, password_hash=password_hash, role='profe')
+                            db.session.add(new_user)
+                            db.session.commit()
+
+                            profe = Profe(name=name_profe, qr_code=qr_code, user_id=new_user.id)
+                            db.session.add(profe)
+                            db.session.commit()
+                        continue
+
                     # Convertir la fecha y las horas a cadenas si son objetos Timestamp
                     date_str = date.strftime('%Y-%m-%d') if isinstance(date, pd.Timestamp) else str(date)
                     start_time_str = start_time.strftime('%H:%M:%S') if isinstance(start_time, pd.Timestamp) else str(start_time)
@@ -661,27 +689,12 @@ def upload_schedule():
                         db.session.add(lab)
                         db.session.commit()
                         flash(f'Laboratorio {lab_name} no encontrado, se ha creado con la descripcion {description}', 'warning')
-                        continue
 
                     # Verificar si el profesor existe
                     profe = Profe.query.filter_by(qr_code=qr_code).first()
                     if not profe:
                         # Crear un nuevo profesor y usuario
-                        first_name, last_name = name_profe.split(' ', 2)[:2]
-                    
-                        # Limpiar los datos del nombre de usuario
-                        first_name = unidecode(first_name).lower()
-                        last_name = unidecode(last_name).lower()
-                        first_name = re.sub(r'[^a-z]', '', first_name)
-                        last_name = re.sub(r'[^a-z]', '', last_name)
-                    
-                        base_username = f"@{first_name[0]}{last_name}"
-                        username = base_username
-                        counter = 1
-                        while User.query.filter_by(username=username).first():
-                            username = f"{base_username}{counter}"
-                            counter += 1
-
+                        username = Nombre(name_profe)
                         password_hash = generate_password_hash(qr_code)
                         new_user = User(username=username, password_hash=password_hash, role='profe')
                         db.session.add(new_user)
@@ -710,7 +723,7 @@ def upload_schedule():
                 flash(f'Ocurrió un error al procesar el archivo: {str(e)}', 'danger')
                 print(e)
                 os.remove(filepath)  # Asegurarse de eliminar el archivo incluso si ocurre un error
-            return redirect(url_for('manage_schedule'))
+            return redirect(url_for('upload_schedule'))
         else:
             flash('Por favor, suba un archivo Excel válido', 'warning')
     return render_template('upload_schedule.html')
