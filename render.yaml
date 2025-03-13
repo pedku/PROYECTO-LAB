@@ -2,7 +2,7 @@
 databases:
 - name: postgres
   databaseName: laboratorios_db
-  user: laboratorios_db_user
+  user: laboratorios_db_qya7_user
   plan: free
   region: oregon
   ipAllowList: []
