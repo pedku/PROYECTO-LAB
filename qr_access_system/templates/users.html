@@ -12,7 +12,7 @@
             <input type="text" class="form-control" id="name" name="name" required>
         </div>
         <div class="mb-3">
-            <label for="password" class="form-label">identificacion/label>
+            <label for="password" class="form-label">identificacion</label>
             <input type="password" class="form-control" id="identificacion" name="identificacion" required>
         </div>
         <div class="mb-3">
@@ -25,14 +25,7 @@
             </select>
         </div>
         
-        <div class="mb-3" id="profe_div" style="display: none;">
-            <label for="name" class="form-label">Nombre Profesor:</label>
-            <input type="text" class="form-control" id="name" name="name" required>
-        </div>
-        <div class="mb-3" id="qr_code_div" style="display: none;">
-            <label for="qr_code" class="form-label">Código QR:</label>
-            <input type="text" class="form-control" id="qr_code" name="qr_code" required>
-        </div>
+        
         <button type="submit" class="btn btn-success">Agregar Usuario</button>
     </form>
     <h2>Usuarios Existentes</h2>
@@ -111,19 +104,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 <script>
-    $('#role').on('change', function() {
-        if (this.value === 'profe') {
-            $('#qr_code_div').show();
-            $('#profe_div').show();
-        } else {
-            $('#qr_code_div').hide();
-            $('#profe_div').hide();
-            $('#name').removeAttr('required');
-            $('#qr_code').removeAttr('required');
-            
-        }
-    
-    });
+  
 
     $('#editModal').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget) // Botón que activó el modal

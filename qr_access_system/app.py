@@ -361,8 +361,8 @@ def manage_profe():
                     db.session.delete(profe)
                     db.session.commit()
 
-                    user = User.query.get(profe.user_id)
-                    if user:
+                user = User.query.get(profe.user_id)                    
+                if user:
                         db.session.delete(user)
                 db.session.commit()
                 
