@@ -829,6 +829,5 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
         create_initial_user()
-        host = os.getenv('FLASK_RUN_HOST', '127.0.0.1')
-        port = int(os.getenv('FLASK_RUN_PORT', 5000))
-        app.run(debug=True, host=host, port=port)
+       
+        app.run(debug=false )
