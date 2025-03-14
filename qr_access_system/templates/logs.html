@@ -21,7 +21,7 @@
         {% for log in logs %}
             <tr  >
                 <td class="centered">{{ log.id }}</td>
-                <td class="centered">{{ log.professor.username }}</td>
+                <td class="centered">{{ log.professor.name }}</td>
                 <td class="centered">{{ log.professor.qr_code }}</td>
                 <td class="centered">{{ log.lab.name }} - {{ log.lab.description }}</td>
                 <td class="centered">{{ log.timestamp }}</td>
