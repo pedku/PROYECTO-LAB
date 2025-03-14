@@ -570,7 +570,7 @@ def validate_qr():
         profe = Profe.query.filter_by(qr_code=qr_code).first()
         if not profe:
             print("Invalid QR code")
-            return jsonify({'status': 'unauthorized', 'message': 'Invalid QR code'})
+            return jsonify({'status': 'unauthorized', 'labID': lab_name , 'message': 'CODIGO QR iNVALIDO '})
 
         print(f"Profe ID: {profe.id}")
         
@@ -587,13 +587,13 @@ def validate_qr():
             logs = AccessLog(profe_id=profe.id, lab_id=schedule.lab_id, lab_name=lab_name, timestamp=datetime.now(COLOMBIA_TZ).strftime('%Y-%m-%d %H:%M'))
             db.session.add(logs)
             db.session.commit()
-            return jsonify({'status': 'success', 'labID': lab_name})
+            return jsonify({'status': 'success', 'labID': lab_name , 'message': 'INGRESO AUTORIZADO'})
         else:
             print("No valid schedule found")
-            return jsonify({'status': 'unauthorized', 'message': 'No valid schedule found'})
+            return jsonify({'status': 'unauthorized', 'labID': lab_name , 'message': 'HORARIO NO VALIDO'})
     except Exception as e:
         print(f"An error occurred: {str(e)}")
-        return jsonify({'status': 'error', 'message': f'An error occurred: {str(e)}'})
+        return jsonify({'status': 'error', 'labID': lab_name , 'message': f'An error occurred: {str(e)}'})
 
 
 # Ruta para cambiar los detalles de un usuario (solo usuarios root)
