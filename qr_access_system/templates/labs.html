@@ -101,10 +101,24 @@
                     <tbody>
                         {% for schedule in lab.schedules %}
                         <tr>
-                            <td>{{ schedule.date.strftime('%d-%m-%Y') }}</td>
+                            <td>
+                                {% if schedule.schedule_type == 'date' and schedule.date %}
+                                    {{ schedule.date.strftime('%Y-%m-%d') }}
+                                {% elif schedule.schedule_type == 'day' %}
+                                    {{ schedule.day_of_week }}
+                                {% else %}
+                                    Sin fecha
+                                {% endif %}
+                            </td>
                             <td>{{ schedule.start_time }}</td>
                             <td>{{ schedule.end_time }}</td>
-                            <td>{{ schedule.professor.username }}</td>
+                            <td>
+                                {% if schedule.professor and schedule.professor.user %}
+                                    {{ schedule.professor.user.username }}
+                                {% else %}
+                                    Sin profesor
+                                {% endif %}
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>

@@ -24,8 +24,8 @@ app.secret_key = os.getenv('SECRET_KEY', 'default_secret_key')
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv( 'DATABASE_URL')
-#app.config['SQLALCHEMY_DATABASE_URI'] =  'postgresql://postgres:Pc200172@localhost/laboratorios_db'
+#app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv( 'DATABASE_URL')
+app.config['SQLALCHEMY_DATABASE_URI'] =  'postgresql://postgres:Pc200172@localhost/laboratorios_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 UPLOAD_FOLDER = 'uploads'
@@ -102,11 +102,13 @@ class Schedule(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     lab_id = db.Column(db.Integer, db.ForeignKey('laboratories.id', ondelete='CASCADE'), nullable=False)
     profe_id = db.Column(db.Integer, db.ForeignKey('profes.id', ondelete='CASCADE'), nullable=False)
-    professor = db.relationship('Profe', backref=db.backref('schedules', cascade='all, delete-orphan'))
-    lab = db.relationship('Laboratory', backref=db.backref('schedules', cascade='all, delete-orphan'))
-    date = db.Column(db.Date, nullable=False)
+    schedule_type = db.Column(db.String(10), nullable=False)  # 'day' o 'date'
+    day_of_week = db.Column(db.String(20), nullable=True)  # Día de la semana (lunes, martes, etc.)
+    date = db.Column(db.Date, nullable=True)  # Fecha específica
     start_time = db.Column(db.Time, nullable=False)
     end_time = db.Column(db.Time, nullable=False)
+    professor = db.relationship('Profe', backref=db.backref('schedules', cascade='all, delete-orphan'))
+    lab = db.relationship('Laboratory', backref=db.backref('schedules', cascade='all, delete-orphan'))
 
 # Modelo para los registros de acceso
 class AccessLog(db.Model):
@@ -118,6 +120,25 @@ class AccessLog(db.Model):
     timestamp = db.Column(db.DateTime, default=lambda: datetime.now(COLOMBIA_TZ))
     professor = db.relationship('Profe', backref=db.backref('access_logs', cascade='all, delete-orphan'))
     lab = db.relationship('Laboratory', backref=db.backref('access_logs', cascade='all, delete-orphan'))
+
+# Modelo para los estudiantes
+class Student(db.Model):
+    __tablename__ = 'students'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    qr_code = db.Column(db.String(200), nullable=False, unique=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    user = db.relationship('User', backref=db.backref('student', uselist=False, cascade='all, delete-orphan'))
+
+# Modelo para la relación entre estudiantes y laboratorios
+class StudentAccess(db.Model):
+    __tablename__ = 'student_access'
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id', ondelete='CASCADE'), nullable=False)
+    schedule_id = db.Column(db.Integer, db.ForeignKey('schedules.id', ondelete='CASCADE'), nullable=False)
+    access_type = db.Column(db.String(20), nullable=False)  # 'delegated' o 'personal'
+    student = db.relationship('Student', backref=db.backref('access', cascade='all, delete-orphan'))
+    schedule = db.relationship('Schedule', backref=db.backref('student_access', cascade='all, delete-orphan'))
 
 # Crear usuario inicial
 def create_initial_user():
@@ -191,7 +212,7 @@ def horario():
 @app.route('/labs', methods=['GET', 'POST'])
 @login_required
 def manage_labs():
-    #gestion de laboratorios para usuarios root y admin
+    # Gestión de laboratorios para usuarios root y admin
     if 'role' in session and session['role'] in ['root', 'admin']:
         if request.method == 'POST':
             name = request.form['name']
@@ -202,17 +223,28 @@ def manage_labs():
                 return redirect(url_for('manage_labs'))
             db.session.add(new_lab)
             db.session.commit()
-            flash('Laboratory added successfully' , 'success')
-        labs = Laboratory.query.all()
+            flash('Laboratorio agregado exitosamente', 'success')
+        
+        # Cargar laboratorios con horarios y profesores relacionados
+        labs = Laboratory.query.options(
+            db.joinedload(Laboratory.schedules)
+            .joinedload(Schedule.professor)
+            .joinedload(Profe.user)
+        ).all()
         return render_template('labs.html', labs=labs)
-    #se visualizan los horarios de los laboratorios en usuario viewer
+
+    # Visualización de laboratorios para usuarios viewer
     if 'role' in session and session['role'] in ['viewer']:
-        labs = Laboratory.query.all()
+        labs = Laboratory.query.options(
+            db.joinedload(Laboratory.schedules)
+            .joinedload(Schedule.professor)
+            .joinedload(Profe.user)
+        ).all()
         return render_template('labs.html', labs=labs)
-    else:
-        flash('Unauthorized access' , 'danger')
-        return redirect(url_for('home'))
-    
+
+    flash('Acceso no autorizado', 'danger')
+    return redirect(url_for('home'))
+
 """
 #ruta laboratorio viewer
 @app.route('/laboratorio', methods=['POST'])
@@ -404,51 +436,74 @@ def manage_schedule():
             if action == 'add':
                 lab_id = request.form['lab_id']
                 profe_id = request.form['profe_id']
-                date = request.form['date']
+                schedule_type = request.form['schedule_type']  # 'day' o 'date'
                 start_time = request.form['start_time']
                 end_time = request.form['end_time']
-                date_converted = datetime.strptime(date, '%Y-%m-%d').date()
-              
-                # Verificar si el profesor ya está asignado a una clase en el mismo horario
-                existing_schedule = Schedule.query.filter(
-                    Schedule.profe_id == profe_id,
-                    Schedule.date == date,
-                    Schedule.start_time < end_time,
-                    Schedule.end_time > start_time
-                    
-                ).first()
 
-                # Verificar si el laboratorio ya está asignado a una clase en el mismo horario
-                existing_schedule_lab = Schedule.query.filter(
-                    Schedule.lab_id == lab_id,
-                    Schedule.date == date,
-                    Schedule.start_time < end_time,
-                    Schedule.end_time > start_time
-                ).first()
-                if existing_schedule_lab:
-                    flash('El laboratorio ya está asignado a una clase en el mismo horario', 'warning')
+                if schedule_type == 'day':
+                    day_of_week = request.form['day_of_week']
+                    # Verificar si ya existe un horario para el día de la semana
+                    existing_schedule = Schedule.query.filter(
+                        Schedule.lab_id == lab_id,
+                        Schedule.schedule_type == 'day',
+                        Schedule.day_of_week == day_of_week,
+                        Schedule.start_time < end_time,
+                        Schedule.end_time > start_time
+                    ).first()
+                    if existing_schedule:
+                        flash('Ya existe un horario para este día de la semana con cruce de horario', 'warning')
+                        return redirect(url_for('manage_schedule'))
+                    new_schedule = Schedule(
+                        lab_id=lab_id,
+                        profe_id=profe_id,
+                        schedule_type='day',
+                        day_of_week=day_of_week,
+                        start_time=start_time,
+                        end_time=end_time
+                    )
+                elif schedule_type == 'date':
+                    date = request.form['date']
+                    # Obtener el día de la semana de la fecha en español
+                    dias_semana = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo']
+                    day_of_week = dias_semana[datetime.strptime(date, '%Y-%m-%d').weekday()]
+
+                    # Verificar si ya existe un horario para la fecha específica
+                    existing_schedule_date = Schedule.query.filter(
+                        Schedule.lab_id == lab_id,
+                        Schedule.schedule_type == 'date',
+                        Schedule.date == date,
+                        Schedule.start_time < end_time,
+                        Schedule.end_time > start_time
+                    ).first()
+
+                    # Verificar si ya existe un horario para el día de la semana correspondiente a la fecha
+                    existing_schedule_day = Schedule.query.filter(
+                        Schedule.lab_id == lab_id,
+                        Schedule.schedule_type == 'day',
+                        Schedule.day_of_week == day_of_week,
+                        Schedule.start_time < end_time,
+                        Schedule.end_time > start_time
+                    ).first()
+
+                    if existing_schedule_date or existing_schedule_day:
+                        flash(f'Ya existe un horario con cruce de horario para esta fecha ({date}) o el día de la semana ({day_of_week.capitalize()})', 'warning')
+                        return redirect(url_for('manage_schedule'))
+
+                    new_schedule = Schedule(
+                        lab_id=lab_id,
+                        profe_id=profe_id,
+                        schedule_type='date',
+                        date=date,
+                        start_time=start_time,
+                        end_time=end_time
+                    )
+                else:
+                    flash('Tipo de agendamiento no válido', 'danger')
                     return redirect(url_for('manage_schedule'))
-                
-                # Verificar si la fecha es anterior a la fecha actual
-                if date_converted < datetime.now(COLOMBIA_TZ).date():
-                    flash('La fecha no puede ser anterior a la fecha actual', 'warning')
-                    return redirect(url_for('manage_schedule'))
-              
-                # Verificar si la hora de finalización es mayor que la hora de inicio
-                if end_time <= start_time:
-                    flash('La hora de finalización debe ser mayor que la hora de inicio', 'warning')
-                    return redirect(url_for('manage_schedule'))
-              
-                # Verificar si el laboratorio ya está asignado a una clase en el mismo horario
-                if existing_schedule:
-                    flash('El profesor ya está asignado a una clase en el mismo horario', 'warning')
-                    return redirect(url_for('manage_schedule'))
-                
-                # Guardar la clase en la base de datos
-                new_schedule = Schedule(lab_id=lab_id, profe_id=profe_id, date=date, start_time=start_time, end_time=end_time)
+
                 db.session.add(new_schedule)
                 db.session.commit()
-                flash('Horario AGREGADO', 'success')
+                flash('Horario agregado exitosamente', 'success')
             elif action == 'delete':
                schedule_id = request.form['schedule_id']
                Schedule.query.filter_by(id=schedule_id).delete()
@@ -559,41 +614,60 @@ def delete_log():
 def validate_qr():
     try:
         data = request.json
-        print(data)
         lab_name = data.get('labID')  # Obtener el nombre del laboratorio
         qr_code = data.get('qr')
         current_time = datetime.now(COLOMBIA_TZ).time()
         current_date = datetime.now(COLOMBIA_TZ).date()
-        
-        print(f"lab_name: {lab_name}, qr_code: {qr_code}, current_time: {current_time}, current_date: {current_date}")
-        
+
+        # Obtener el día de la semana en español
+        dias_semana = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo']
+        current_day_of_week = dias_semana[current_date.weekday()]
+
+        # Verificar si el profesor existe
         profe = Profe.query.filter_by(qr_code=qr_code).first()
         if not profe:
-            print("Invalid QR code")
-            return jsonify({'status': 'unauthorized', 'labID': lab_name , 'message': 'CODIGO QR iNVALIDO '})
+            return jsonify({'status': 'unauthorized', 'labID': lab_name, 'message': 'Código QR inválido'})
 
-        print(f"Profe ID: {profe.id}")
-        
-        schedule = Schedule.query.join(Laboratory).filter(
+        # Verificar si el laboratorio existe
+        lab = Laboratory.query.filter_by(name=lab_name).first()
+        if not lab:
+            return jsonify({'status': 'unauthorized', 'labID': lab_name, 'message': 'Laboratorio no encontrado'})
+
+        # Verificar agendamientos por fecha
+        schedule_by_date = Schedule.query.filter(
+            Schedule.lab_id == lab.id,
             Schedule.profe_id == profe.id,
+            Schedule.schedule_type == 'date',
             Schedule.date == current_date,
             Schedule.start_time <= current_time,
-            Schedule.end_time >= current_time,
-            Laboratory.name == lab_name
+            Schedule.end_time >= current_time
         ).first()
 
-        if schedule:
-            print(f"Schedule found: {schedule.id}")
-            logs = AccessLog(profe_id=profe.id, lab_id=schedule.lab_id, lab_name=lab_name, timestamp=datetime.now(COLOMBIA_TZ).strftime('%Y-%m-%d %H:%M'))
+        # Verificar agendamientos por día de la semana
+        schedule_by_day = Schedule.query.filter(
+            Schedule.lab_id == lab.id,
+            Schedule.profe_id == profe.id,
+            Schedule.schedule_type == 'day',
+            Schedule.day_of_week == current_day_of_week,
+            Schedule.start_time <= current_time,
+            Schedule.end_time >= current_time
+        ).first()
+
+        # Validar si existe un horario válido
+        if schedule_by_date or schedule_by_day:
+            logs = AccessLog(
+                profe_id=profe.id,
+                lab_id=lab.id,
+                lab_name=lab_name,
+                timestamp=datetime.now(COLOMBIA_TZ)
+            )
             db.session.add(logs)
             db.session.commit()
-            return jsonify({'status': 'success', 'labID': lab_name , 'message': 'INGRESO AUTORIZADO'})
-        else:
-            print("No valid schedule found")
-            return jsonify({'status': 'unauthorized', 'labID': lab_name , 'message': 'HORARIO NO VALIDO'})
+            return jsonify({'status': 'success', 'labID': lab_name, 'message': 'Ingreso autorizado'})
+
+        return jsonify({'status': 'unauthorized', 'labID': lab_name, 'message': 'Horario no válido'})
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        return jsonify({'status': 'error', 'labID': lab_name , 'message': f'An error occurred: {str(e)}'})
+        return jsonify({'status': 'error', 'labID': lab_name, 'message': f'Ocurrió un error: {str(e)}'})
 
 
 # Ruta para cambiar los detalles de un usuario (solo usuarios root)
@@ -814,6 +888,131 @@ def my_qr():
     user = db.session.get(User, session['user_id'])
     profe = Profe.query.filter_by(user_id=user.id).first()
     return render_template('my_qr.html', user=user, profe=profe)
+
+# Ruta para gestionar estudiantes (solo usuarios root y admin)
+@app.route('/manage_students', methods=['GET', 'POST'])
+@login_required
+@role_required('root', 'admin')
+def manage_students():
+    try:
+        if request.method == 'POST':
+            action = request.form.get('action')
+            if action == 'add':
+                name = request.form['name']
+                qr_code = request.form['qr_code']
+                username = Nombre(name)
+                password_hash = generate_password_hash(qr_code)
+                new_user = User(username=username, password_hash=password_hash, role='student')
+                db.session.add(new_user)
+                db.session.commit()
+
+                new_student = Student(name=name, qr_code=qr_code, user_id=new_user.id)
+                db.session.add(new_student)
+                db.session.commit()
+                flash('Estudiante agregado exitosamente', 'success')
+            elif action == 'delete':
+                student_id = request.form['student_id']
+                student = Student.query.get(student_id)
+                if student:
+                    db.session.delete(student)
+                    db.session.commit()
+                    flash('Estudiante eliminado exitosamente', 'success')
+                else:
+                    flash('Estudiante no encontrado', 'danger')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Ocurrió un error: {str(e)}', 'danger')
+    students = Student.query.all()
+    return render_template('students.html', students=students)
+
+# Ruta para gestionar el acceso de estudiantes a laboratorios (solo profesores)
+@app.route('/assign_student_access', methods=['GET', 'POST'])
+@login_required
+@role_required('profe')
+def assign_student_access():
+    try:
+        user = db.session.get(User, session['user_id'])
+        profe = Profe.query.filter_by(user_id=user.id).first()
+        schedules = Schedule.query.filter_by(profe_id=profe.id).all()
+
+        if request.method == 'POST':
+            student_id = request.form['student_id']
+            schedule_id = request.form['schedule_id']
+            access_type = request.form['access_type']
+
+            # Verificar si ya existe un acceso para el estudiante y horario
+            existing_access = StudentAccess.query.filter_by(student_id=student_id, schedule_id=schedule_id).first()
+            if existing_access:
+                flash('El estudiante ya tiene acceso asignado a este horario', 'warning')
+                return redirect(url_for('assign_student_access'))
+
+            new_access = StudentAccess(student_id=student_id, schedule_id=schedule_id, access_type=access_type)
+            db.session.add(new_access)
+            db.session.commit()
+            flash('Acceso asignado exitosamente', 'success')
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Ocurrió un error: {str(e)}', 'danger')
+    students = Student.query.all()
+    return render_template('assign_student_access.html', students=students, schedules=schedules)
+
+# Ruta para validar el acceso de estudiantes
+@app.route('/validate_student_access', methods=['POST'])
+def validate_student_access():
+    try:
+        data = request.json
+        lab_name = data.get('labID')
+        qr_code = data.get('qr')
+        current_time = datetime.now(COLOMBIA_TZ).time()
+        current_date = datetime.now(COLOMBIA_TZ).date()
+
+        # Obtener el día de la semana en español
+        dias_semana = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo']
+        current_day_of_week = dias_semana[current_date.weekday()]
+
+        # Verificar si el estudiante existe
+        student = Student.query.filter_by(qr_code=qr_code).first()
+        if not student:
+            return jsonify({'status': 'unauthorized', 'labID': lab_name, 'message': 'Código QR inválido'})
+
+        # Verificar si el laboratorio existe
+        lab = Laboratory.query.filter_by(name=lab_name).first()
+        if not lab:
+            return jsonify({'status': 'unauthorized', 'labID': lab_name, 'message': 'Laboratorio no encontrado'})
+
+        # Verificar acceso por horario
+        access = StudentAccess.query.join(Schedule).filter(
+            StudentAccess.student_id == student.id,
+            Schedule.lab_id == lab.id,
+            ((Schedule.schedule_type == 'date') & (Schedule.date == current_date)) |
+            ((Schedule.schedule_type == 'day') & (Schedule.day_of_week == current_day_of_week)),
+            Schedule.start_time <= current_time,
+            Schedule.end_time >= current_time
+        ).first()
+
+        if not access:
+            return jsonify({'status': 'unauthorized', 'labID': lab_name, 'message': 'Acceso no autorizado'})
+
+        # Verificar tipo de acceso
+        if access.access_type == 'delegated':
+            # Verificar si el profesor ya ingresó
+            professor_log = AccessLog.query.filter_by(profe_id=access.schedule.profe_id, lab_id=lab.id).first()
+            if not professor_log:
+                return jsonify({'status': 'unauthorized', 'labID': lab_name, 'message': 'El profesor aún no ha ingresado'})
+
+        # Registrar el acceso del estudiante
+        logs = AccessLog(
+            profe_id=access.schedule.profe_id,
+            lab_id=lab.id,
+            lab_name=lab_name,
+            timestamp=datetime.now(COLOMBIA_TZ)
+        )
+        db.session.add(logs)
+        db.session.commit()
+        return jsonify({'status': 'success', 'labID': lab_name, 'message': 'Ingreso autorizado'})
+    except Exception as e:
+        return jsonify({'status': 'error', 'labID': lab_name, 'message': f'Ocurrió un error: {str(e)}'})
 
 # RUTA DE EROR 404
 @app.errorhandler(404)

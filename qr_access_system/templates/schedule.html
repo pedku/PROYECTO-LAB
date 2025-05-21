@@ -18,16 +18,38 @@
                 </select>
             </div>
             <div class="form-group">
-                <label for="profe_id">Profesor</label>
-                <select class="form-control" id="profe_id" name="profe_id" required>
+                <label for="profe_search">Profesor (Buscar por Identificación o Nombre)</label>
+                <input type="text" class="form-control" id="profe_search" placeholder="Buscar profesor..." oninput="filterProfes()">
+                <input type="hidden" id="profe_id" name="profe_id" required>
+                <ul class="list-group mt-2" id="profe_list" style="max-height: 200px; overflow-y: auto;">
                     {% for profe in profes %}
-                    <option value="{{ profe.id }}">{{ profe.name }}</option>
+                    <li class="list-group-item" data-id="{{ profe.id }}" data-name="{{ profe.name }}" data-qr="{{ profe.qr_code }}" onclick="selectProfe(this)">
+                        {{ profe.qr_code }} - {{ profe.name }}
+                    </li>
                     {% endfor %}
+                </ul>
+            </div>
+            <div class="form-group">
+                <label for="schedule_type">Tipo de Agendamiento:</label>
+                <select class="form-control" id="schedule_type" name="schedule_type" required>
+                    <option value="day">Por Día</option>
+                    <option value="date">Por Fecha</option>
                 </select>
             </div>
-            <div class="mb-3">
+            <div class="form-group" id="day_of_week_container" style="display: none;">
+                <label for="day_of_week">Día de la Semana:</label>
+                <select class="form-control" id="day_of_week" name="day_of_week">
+                    <option value="lunes">Lunes</option>
+                    <option value="martes">Martes</option>
+                    <option value="miércoles">Miércoles</option>
+                    <option value="jueves">Jueves</option>
+                    <option value="viernes">Viernes</option>
+                    <option value="sábado">Sábado</option>
+                </select>
+            </div>
+            <div class="mb-3" id="date_container" style="display: none;">
                 <label for="date" class="form-label">Fecha:</label>
-                <input type="date" class="form-control" id="date" name="date" required>
+                <input type="date" class="form-control" id="date" name="date">
             </div>
             <div class="form-group">
                 <label for="start_time">Hora de Inicio</label>
@@ -46,7 +68,8 @@
                     <th class="centered">ID</th>
                     <th class="centered">Laboratorio</th>
                     <th class="centered">Profesor</th>
-                    <th class="centered">Fecha</th>
+                    <th class="centered">Tipo</th>
+                    <th class="centered">Día/Fecha</th>
                     <th class="centered">Hora de Inicio</th>
                     <th class="centered">Hora de Fin</th>
                     <th class="centered">Acciones</th>
@@ -58,17 +81,27 @@
                     <td>{{ schedule.id }}</td>
                     <td>{{ schedule.lab.name }}</td>
                     <td>{{ schedule.professor.name }}</td>
-                    <td>{{ schedule.date }}</td>
+                    <td>{{ schedule.schedule_type }}</td>
+                    <td>
+                        {% if schedule.schedule_type == 'day' %}
+                        {{ schedule.day_of_week }}
+                        {% elif schedule.schedule_type == 'date' %}
+                        {{ schedule.date }}
+                        {% endif %}
+                    </td>
                     <td>{{ schedule.start_time }}</td>
                     <td>{{ schedule.end_time }}</td>
                     <td>
-                        <form method="POST" style="display:inline;">
+                        <form method="POST" style="display:inline; margin:0; padding:0; border:none;">
                             <input type="hidden" name="action" value="delete">
                             <input type="hidden" name="schedule_id" value="{{ schedule.id }}">
-                            <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-trash-can"></i></button>
+                            <button type="submit" class="btn btn-danger btn-sm" style="margin:0; padding:5px 10px; border:none;">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
                         </form>
-                    
-                        <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#editModal{{ schedule.id }}"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#editModal{{ schedule.id }}" style="margin:0; padding:5px 10px;">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
                     </td>
                 </tr>
                 {% endfor %}
@@ -107,9 +140,27 @@
                                {% endfor %}
                            </select>
                        </div>
-                       <div class="mb-3">
+                       <div class="form-group">
+                           <label for="schedule_type{{ schedule.id }}">Tipo de Agendamiento:</label>
+                           <select class="form-control" id="schedule_type{{ schedule.id }}" name="schedule_type" required>
+                               <option value="day" {% if schedule.schedule_type == 'day' %}selected{% endif %}>Por Día</option>
+                               <option value="date" {% if schedule.schedule_type == 'date' %}selected{% endif %}>Por Fecha</option>
+                           </select>
+                       </div>
+                       <div class="form-group" id="day_of_week_container{{ schedule.id }}" style="display: {% if schedule.schedule_type == 'day' %}block{% else %}none{% endif %};">
+                           <label for="day_of_week{{ schedule.id }}">Día de la Semana:</label>
+                           <select class="form-control" id="day_of_week{{ schedule.id }}" name="day_of_week">
+                               <option value="lunes" {% if schedule.day_of_week == 'lunes' %}selected{% endif %}>Lunes</option>
+                               <option value="martes" {% if schedule.day_of_week == 'martes' %}selected{% endif %}>Martes</option>
+                               <option value="miércoles" {% if schedule.day_of_week == 'miércoles' %}selected{% endif %}>Miércoles</option>
+                               <option value="jueves" {% if schedule.day_of_week == 'jueves' %}selected{% endif %}>Jueves</option>
+                               <option value="viernes" {% if schedule.day_of_week == 'viernes' %}selected{% endif %}>Viernes</option>
+                               <option value="sábado" {% if schedule.day_of_week == 'sábado' %}selected{% endif %}>Sábado</option>
+                           </select>
+                       </div>
+                       <div class="mb-3" id="date_container{{ schedule.id }}" style="display: {% if schedule.schedule_type == 'date' %}block{% else %}none{% endif %};">
                            <label for="date{{ schedule.id }}" class="form-label">Fecha:</label>
-                           <input type="date" class="form-control" id="date{{ schedule.id }}" name="date" value="{{ schedule.date }}" required>
+                           <input type="date" class="form-control" id="date{{ schedule.id }}" name="date" value="{{ schedule.date }}">
                        </div>
                        <div class="form-group">
                            <label for="start_time{{ schedule.id }}">Hora de Inicio</label>
@@ -129,4 +180,104 @@
        </div>
    </div>
    {% endfor %}
+</div>
+
+<script>
+    const scheduleType = document.getElementById('schedule_type');
+    const dayOfWeekContainer = document.getElementById('day_of_week_container');
+    const dateContainer = document.getElementById('date_container');
+    const profeSearch = document.getElementById('profe_search');
+    const profeList = document.getElementById('profe_list');
+
+    // Mostrar el contenedor correcto al cargar la página
+    function updateScheduleType() {
+        if (scheduleType.value === 'day') {
+            dayOfWeekContainer.style.display = 'block';
+            dateContainer.style.display = 'none';
+        } else if (scheduleType.value === 'date') {
+            dayOfWeekContainer.style.display = 'none';
+            dateContainer.style.display = 'block';
+        } else {
+            dayOfWeekContainer.style.display = 'none';
+            dateContainer.style.display = 'none';
+        }
+    }
+
+    scheduleType.addEventListener('change', updateScheduleType);
+
+    // Llamar a la función al cargar la página para establecer el estado inicial
+    document.addEventListener('DOMContentLoaded', updateScheduleType);
+
+    function filterProfes() {
+        const searchValue = profeSearch.value.toLowerCase();
+        const profeItems = profeList.getElementsByTagName('li');
+        let hasVisibleItems = false;
+
+        for (let profe of profeItems) {
+            const name = profe.getAttribute('data-name').toLowerCase();
+            const qr = profe.getAttribute('data-qr').toLowerCase();
+            if (name.includes(searchValue) || qr.includes(searchValue)) {
+                profe.style.display = '';
+                hasVisibleItems = true;
+            } else {
+                profe.style.display = 'none';
+            }
+        }
+
+        // Mostrar la lista si hay elementos visibles
+        profeList.style.display = hasVisibleItems ? 'block' : 'none';
+    }
+
+    function selectProfe(profeElement) {
+        const profeId = profeElement.getAttribute('data-id');
+        const profeName = profeElement.getAttribute('data-name');
+        profeSearch.value = `${profeName}`;
+        document.getElementById('profe_id').value = profeId;
+        profeList.style.display = 'none';
+    }
+
+    // Mostrar la lista solo cuando el usuario comience a escribir
+    profeSearch.addEventListener('input', function () {
+        if (this.value.trim() !== '') {
+            filterProfes();
+        } else {
+            profeList.style.display = 'none';
+        }
+    });
+
+    // Ocultar la lista si se hace clic fuera del campo de búsqueda o la lista
+    document.addEventListener('click', function (event) {
+        if (!profeSearch.contains(event.target) && !profeList.contains(event.target)) {
+            profeList.style.display = 'none';
+        }
+    });
+</script>
+
+<style>
+    #profe_list {
+        display: none;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background-color: #fff;
+        position: absolute;
+        z-index: 1000;
+        width: 100%;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    #profe_list .list-group-item {
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+    #profe_list .list-group-item:hover {
+        background-color: #f1f1f1;
+    }
+
+    #profe_search:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+    }
+</style>
 {% endblock %}

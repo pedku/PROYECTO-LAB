@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Estudiantes{% endblock %}
+
+{% block content %}
+<div class="container margin_top">
+    <h1 class="text-center mb-4">Gestión de Estudiantes</h1>
+    <form method="POST" action="{{ url_for('manage_students') }}" class="mb-4">
+        <input type="hidden" name="action" value="add">
+        <div class="form-group">
+            <label for="name">Nombre del Estudiante</label>
+            <input type="text" class="form-control" id="name" name="name" placeholder="Nombre completo" required>
+        </div>
+        <div class="form-group">
+            <label for="qr_code">Código QR</label>
+            <input type="text" class="form-control" id="qr_code" name="qr_code" placeholder="Código QR único" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Agregar Estudiante</button>
+    </form>
+
+    <h2 class="text-center mb-4">Lista de Estudiantes</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Código QR</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+            <tr>
+                <td>{{ student.id }}</td>
+                <td>{{ student.name }}</td>
+                <td>{{ student.qr_code }}</td>
+                <td>
+                    <form method="POST" style="display:inline;">
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="student_id" value="{{ student.id }}">
+                        <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Asignar Acceso a Estudiantes{% endblock %}
+
+{% block content %}
+<div class="container margin_top">
+    <h1 class="text-center mb-4">Asignar Acceso a Estudiantes</h1>
+    <form method="POST" action="{{ url_for('assign_student_access') }}" class="mb-4">
+        <div class="form-group">
+            <label for="student_id">Estudiante</label>
+            <select class="form-control" id="student_id" name="student_id" required>
+                {% for student in students %}
+                <option value="{{ student.id }}">{{ student.name }} - {{ student.qr_code }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="schedule_id">Horario</label>
+            <select class="form-control" id="schedule_id" name="schedule_id" required>
+                {% for schedule in schedules %}
+                <option value="{{ schedule.id }}">
+                    {{ schedule.lab.name }} - 
+                    {% if schedule.schedule_type == 'day' %}
+                        {{ schedule.day_of_week }}
+                    {% else %}
+                        {{ schedule.date }}
+                    {% endif %}
+                    ({{ schedule.start_time }} - {{ schedule.end_time }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="access_type">Tipo de Acceso</label>
+            <select class="form-control" id="access_type" name="access_type" required>
+                <option value="delegated">Delegado</option>
+                <option value="personal">Personal</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Asignar Acceso</button>
+    </form>
+</div>
+{% endblock %}
