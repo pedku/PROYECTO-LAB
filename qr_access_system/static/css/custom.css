@@ -1,3 +1,17 @@
+
+@font-face {
+    font-family: Nexa-ExtraLight;
+    src: url('../fonts/nexa/Nexa-ExtraLight.ttf');
+    
+  }
+
+  
+  @font-face {
+    font-family: Nexa-Heavy;
+    src: url('../fonts/nexa/Nexa-Heavy.ttf');
+   
+  }
+
 body {
     display: flex;
 }
@@ -17,7 +31,7 @@ body {
 .sidebar {
     width: 250px;
     height: 100vh;
-    background-color: #1D2840;
+    background-color: #121023;
     position: fixed;
     top: 60px; /* Ajuste para que no quede tapado por el encabezado */
     left: 0;
@@ -51,7 +65,7 @@ body {
 .hamburger-btn {
     background-color: transparent;
     border: none;
-    color: #1D2840;
+    color: #121023;
     padding: 10px;
     cursor: pointer;
     margin-right: 10px;
@@ -93,7 +107,7 @@ body {
 }
 
 .nav-link:hover {
-    color: #F2D22E !important; /* Color azul al pasar el ratón */
+    color: #FFDF2D !important; /* Color azul al pasar el ratón */
 }
 
 /* Estilo para el menú desplegable */

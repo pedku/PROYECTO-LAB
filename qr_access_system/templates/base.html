@@ -69,6 +69,8 @@
         </div>
     </div>
     
+
+   
     
     <div class="sidebar" id="sidebar">
         
@@ -98,6 +100,22 @@
                         </li>
                     {% endif %}
             {% endif %}
+            {% if session.get('role') == 'student' %}
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('profile') }}"><i class="fas fa-user"></i> Perfil</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('my_qr') }}"><i class="fas fa-id-card"></i> Mi Carnet</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('my_schedule') }}"><i class="fas fa-calendar"></i> Mis Horarios</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('change_password') }}"><i class="fa-solid fa-gears"></i> Configuracion</a>
+            </li>
+            {% endif %}
+
+            
          
             {% if session.get('role') == 'viewer' %}
             <li class="nav-item">
@@ -117,7 +135,7 @@
                 <a class="nav-link" href="{{ url_for('manage_labs') }}"><i class="fas fa-flask"></i> Laboratorios</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="{{ url_for('manage_profe') }}"><i class="fas fa-chalkboard-teacher"></i> Profesores</a>
+                <a class="nav-link" href="{{ url_for('manage_professors') }}"><i class="fas fa-chalkboard-teacher"></i> Profesores</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="{{ url_for('manage_students') }}"><i class="fas fa-chalkboard-teacher"></i> Estudiantes</a>

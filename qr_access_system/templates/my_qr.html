@@ -1,15 +1,19 @@
 {% extends "base.html" %}
 
-{% block title %}Carnet del Profesor{% endblock %}
+{% block title %}Carnet de {{ user.role|capitalize }}{% endblock %}
 
 {% block content %}
 <div class="container margin_top">
-    <h1 class="text-center">Carnet del Profesor</h1>
+    <h1 class="text-center">Carnet de {{ user.role|capitalize }}</h1>
     <div class="card">
         <div class="card-body text-center">
-            <h5 class="card-title">{{ user.username }}</h5>
-            <p class="card-text">Código QR: {{ profe.qr_code }}</p>
-            <img src="https://api.qrserver.com/v1/create-qr-code/?data={{ profe.qr_code }}&size=200x200" alt="QR Code" class="img-fluid">
+            <h5 class="card-title">Nombre: {{ user.name }}</h5>
+            <p class="card-text">Usuario: {{ user.username }}</p>
+            <p class="card-text">Rol: {{ user.role|capitalize }}</p>
+            <p class="card-text">Código QR:</p>
+            <div>
+                <img src="https://api.qrserver.com/v1/create-qr-code/?data={{ user.qr_code }}&size=150x150" alt="Código QR">
+            </div>
         </div>
     </div>
 </div>

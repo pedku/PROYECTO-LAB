@@ -113,8 +113,8 @@
                             <td>{{ schedule.start_time }}</td>
                             <td>{{ schedule.end_time }}</td>
                             <td>
-                                {% if schedule.professor and schedule.professor.user %}
-                                    {{ schedule.professor.user.username }}
+                                {% if schedule.assigned_user %}
+                                    {{ schedule.assigned_user.name }}
                                 {% else %}
                                     Sin profesor
                                 {% endif %}

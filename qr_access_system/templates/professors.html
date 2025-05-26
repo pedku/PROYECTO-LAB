@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Gestionar Profesores{% endblock %}
+
+{% block content %}
+<div class="container margin_top">
+    <h1 class="text-center">Gestionar Profesores</h1>
+    <form action="{{ url_for('manage_professors') }}" method="post" class="my-4">
+        <input type="hidden" name="action" value="add">
+        <div class="mb-3">
+            <label for="name" class="form-label">Nombre del Profesor:</label>
+            <input type="text" class="form-control" id="name" name="name" required>
+        </div>
+        <div class="mb-3">
+            <label for="identificacion" class="form-label">Identificación:</label>
+            <input type="text" class="form-control" id="identificacion" name="identificacion" required>
+        </div>
+        <button type="submit" class="btn btn-success">Agregar Profesor</button>
+    </form>
+    <h2>Profesores Existentes</h2>
+    <table class="table table-striped mt-5">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Usuario</th>
+                <th>QR Code</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for professor in professors %}
+            <tr>
+                <td>{{ professor.id }}</td>
+                <td>{{ professor.name }}</td>
+                <td>{{ professor.username }}</td>
+                <td>{{ professor.qr_code }}</td>
+                <td>
+                    <form method="POST" style="display:inline;">
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="user_id" value="{{ professor.id }}">
+                        <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                    </form>
+                    <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#editModal{{ professor.id }}">Editar</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Edit Modal -->
+{% for professor in professors %}
+<div class="modal fade" id="editModal{{ professor.id }}" tabindex="-1" role="dialog" aria-labelledby="editModalLabel{{ professor.id }}" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalLabel{{ professor.id }}">Editar Profesor</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form method="POST" action="{{ url_for('manage_professors') }}">
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="edit">
+                    <input type="hidden" name="user_id" value="{{ professor.id }}">
+                    <div class="form-group">
+                        <label for="username{{ professor.id }}">Nombre de Usuario</label>
+                        <input type="text" class="form-control" id="username{{ professor.id }}" name="username" value="{{ professor.username }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="name{{ professor.id }}">Nombre</label>
+                        <input type="text" class="form-control" id="name{{ professor.id }}" name="name" value="{{ professor.name }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="qr_code{{ professor.id }}">QR Code</label>
+                        <input type="text" class="form-control" id="qr_code{{ professor.id }}" name="qr_code" value="{{ professor.qr_code }}">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

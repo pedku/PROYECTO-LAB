@@ -1,16 +1,16 @@
 {% extends "base.html" %}
 
-{% block title %}Perfil del Profesor{% endblock %}
+{% block title %}Perfil de {{ user.role|capitalize }}{% endblock %}
 
 {% block content %}
 <div class="container margin_top">
-    <h1 class="text-center">Perfil del Profesor</h1>
+    <h1 class="text-center">Perfil de {{ user.role|capitalize }}</h1>
     <div class="card">
         <div class="card-body">
-            <h5 class="card-title">{{ user.username }}</h5>
-            <p class="card-text">Código QR: {{ profe.qr_code }}</p>
-            <a href="{{ url_for('my_qr') }}" class="btn btn-primary">Ver Carnet</a>
-            <a href="{{ url_for('my_schedule') }}" class="btn btn-secondary">Ver Horarios</a>
+            <h5 class="card-title">Bienvenido, {{ user.name }}</h5>
+            <p class="card-text">Usuario: {{ user.username }}</p>
+            <p class="card-text">Rol: {{ user.role|capitalize }}</p>
+            <p class="card-text">Código QR: {{ user.qr_code }}</p>
         </div>
     </div>
 </div>

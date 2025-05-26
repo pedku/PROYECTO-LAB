@@ -2,13 +2,16 @@
 [ FONT ]*/
 
 @font-face {
-    font-family: Ubuntu-Regular;
-    src: url('../fonts/ubuntu/Ubuntu-Regular.ttf'); 
+    font-family: Nexa-ExtraLight;
+    src: url('../fonts/nexa/Nexa-ExtraLight.ttf');
+    
   }
+
   
   @font-face {
-    font-family: Ubuntu-Bold;
-    src: url('../fonts/ubuntu/Ubuntu-Bold.ttf'); 
+    font-family: Nexa-Heavy;
+    src: url('../fonts/nexa/Nexa-Heavy.ttf');
+   
   }
   
   
@@ -30,7 +33,7 @@
   
   /*---------------------------------------------*/
   a {
-      font-family: Ubuntu-Regular;
+      font-family: Nexa-ExtraLight;
       font-size: 14px;
       line-height: 1.7;
       color: #666666;
@@ -56,7 +59,8 @@
   }
   
   p {
-      font-family: Ubuntu-Regular;
+
+      font-family: Nexa-ExtraLight;
       font-size: 14px;
       line-height: 1.7;
       color: #666666;
@@ -128,7 +132,7 @@
   /*//////////////////////////////////////////////////////////////////
   [ Utility ]*/
   .txt1 {
-    font-family: Poppins-Regular;
+    font-family:  Helvetica, sans-serif;
     font-size: 13px;
     color: #e5e5e5;
     line-height: 1.5;
@@ -275,11 +279,11 @@
     -moz-transition: all 0.4s;
     transition: all 0.4s;
   
-    background: #1D2840;
-    background: -webkit-linear-gradient(left, #1D2840, #7e8135, #F2D22E,  #1D2840);
-    background: -o-linear-gradient(left, #1D2840, #7e8135, #F2D22E,  #1D2840);
-    background: -moz-linear-gradient(left, #1D2840, #7e8135, #F2D22E,  #1D2840);
-    background: linear-gradient(left, #1D2840, #7e8135, #F2D22E,  #1D2840);
+    background: #121023;
+    background: -webkit-linear-gradient(left, #121023, #7e8135, #FFDF2D,  #121023);
+    background: -o-linear-gradient(left, #121023, #7e8135, #FFDF2D,  #121023);
+    background: -moz-linear-gradient(left, #121023, #7e8135, #FFDF2D,  #121023);
+    background: linear-gradient(left, #121023, #7e8135, #FFDF2D,  #121023);
   }
   
   .focus-input100::after {
@@ -360,11 +364,12 @@
     height: 42px;
     border-radius: 21px;
   
-    background: #1D2840;
-    background: -webkit-linear-gradient(left, #1D2840, #7e8135, #F2D22E, #7e8135, #1D2840);
-    background: -o-linear-gradient(left, #1D2840, #7e8135, #F2D22E, #7e8135, #1D2840);
-    background: -moz-linear-gradient(left, #1D2840, #7e8135, #F2D22E, #7e8135, #1D2840);
-    background: linear-gradient(left, #1D2840, #7e8135, #F2D22E, #7e8135, #1D2840);
+    background: #121023;
+    background: -webkit-linear-gradient(left, #121023, #7e8135, #FFDF2D,  #121023);
+    background: -o-linear-gradient(left, #121023, #7e8135, #FFDF2D,  #121023);
+    background: -moz-linear-gradient(left, #121023, #7e8135, #FFDF2D,  #121023);
+    background: linear-gradient(left, #121023, #7e8135, #FFDF2D,  #121023);
+  
     position: relative;
     z-index: 1;
   

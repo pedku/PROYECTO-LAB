@@ -1,15 +1,17 @@
 {% extends "base.html" %}
 
-{% block title %}Horarios del Profesor{% endblock %}
+{% block title %}Horarios de {{ user.role|capitalize }}{% endblock %}
 
 {% block content %}
 <div class="container margin_top">
-    <h1 class="text-center">Horarios del Profesor</h1>
+    <h1 class="text-center">Horarios de {{ user.role|capitalize }}</h1>
+    
+    <!-- Tabla de horarios -->
     <table class="table">
         <thead>
             <tr>
                 <th>Laboratorio</th>
-                <th>Fecha</th>
+                <th>{% if user.role == 'profe' %}Día/Fecha{% else %}Fecha{% endif %}</th>
                 <th>Hora de Inicio</th>
                 <th>Hora de Fin</th>
             </tr>
@@ -18,12 +20,151 @@
             {% for schedule in schedules %}
             <tr>
                 <td>{{ schedule.lab.name }}</td>
-                <td>{{ schedule.date }}</td>
+                <td>
+                    {% if schedule.schedule_type == 'day' %}
+                        {{ schedule.day_of_week|capitalize }}
+                    {% elif schedule.schedule_type == 'date' %}
+                        {{ schedule.date }}
+                    {% endif %}
+                </td>
                 <td>{{ schedule.start_time }}</td>
                 <td>{{ schedule.end_time }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+
+    <!-- Apartado para agendar estudiantes (solo para profesores) -->
+    {% if user.role == 'profe' %}
+    <h2 class="text-center mt-5">Agendar Estudiantes a Clases</h2>
+    <form method="POST" action="{{ url_for('assign_student_access') }}" class="my-4" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="student_search">Estudiante (Buscar por Nombre o Usuario)</label>
+            <input type="text" class="form-control" id="student_search" placeholder="Buscar estudiante..." oninput="filterStudents()">
+            <input type="hidden" id="student_id" name="student_id" required>
+            <ul class="list-group mt-2" id="student_list" style="max-height: 200px; overflow-y: auto;">
+                {% for student in students %}
+                <li class="list-group-item" data-id="{{ student.id }}" data-name="{{ student.name }}" data-username="{{ student.username }}" onclick="selectStudent(this)">
+                    {{ student.name }} ({{ student.username }})
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="form-group">
+            <label for="schedule_id">Horario</label>
+            <select class="form-control" id="schedule_id" name="schedule_id" required>
+                {% for schedule in schedules %}
+                <option value="{{ schedule.id }}">
+                    {{ schedule.lab.name }} - 
+                    {% if schedule.schedule_type == 'day' %}
+                        {{ schedule.day_of_week|capitalize }}
+                    {% elif schedule.schedule_type == 'date' %}
+                        {{ schedule.date }}
+                    {% endif %}
+                    ({{ schedule.start_time }} - {{ schedule.end_time }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="access_type">Tipo de Acceso</label>
+            <select class="form-control" id="access_type" name="access_type" required>
+                <option value="personal">Personal</option>
+                <option value="delegated">Delegado</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="file_upload">Subir Archivo (Opcional)</label>
+            <input type="file" class="form-control-file" id="file_upload" name="file_upload" accept=".csv, .xlsx">
+        </div>
+        <button type="submit" class="btn btn-primary">Agendar Estudiante</button>
+    </form>
+    {% endif %}
 </div>
+
+<script>
+    const studentSearch = document.getElementById('student_search');
+    const studentList = document.getElementById('student_list');
+
+    function filterStudents() {
+        const searchValue = studentSearch.value.toLowerCase();
+        const studentItems = studentList.getElementsByTagName('li');
+        let hasVisibleItems = false;
+
+        for (let student of studentItems) {
+            const name = student.getAttribute('data-name').toLowerCase();
+            const username = student.getAttribute('data-username').toLowerCase();
+            if (name.includes(searchValue) || username.includes(searchValue)) {
+                student.style.display = '';
+                hasVisibleItems = true;
+            } else {
+                student.style.display = 'none';
+            }
+        }
+
+        const noResultsItem = studentList.querySelector('.no-results');
+        if (!hasVisibleItems && searchValue.trim() !== '') {
+            if (!noResultsItem) {
+                const newNoResultsItem = document.createElement('li');
+                newNoResultsItem.className = 'list-group-item text-muted no-results';
+                newNoResultsItem.textContent = 'No hay coincidencias';
+                studentList.appendChild(newNoResultsItem);
+            }
+        } else if (noResultsItem) {
+            noResultsItem.remove();
+        }
+
+        studentList.style.display = hasVisibleItems || noResultsItem ? 'block' : 'none';
+    }
+
+    function selectStudent(studentElement) {
+        const studentId = studentElement.getAttribute('data-id');
+        const studentName = studentElement.getAttribute('data-name');
+        studentSearch.value = `${studentName}`;
+        document.getElementById('student_id').value = studentId;
+        studentList.style.display = 'none';
+    }
+
+    studentSearch.addEventListener('input', function () {
+        if (this.value.trim() !== '') {
+            filterStudents();
+        } else {
+            studentList.style.display = 'none';
+        }
+    });
+
+    document.addEventListener('click', function (event) {
+        if (!studentSearch.contains(event.target) && !studentList.contains(event.target)) {
+            studentList.style.display = 'none';
+        }
+    });
+</script>
+
+<style>
+    #student_list {
+        display: none;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background-color: #fff;
+        position: absolute;
+        z-index: 1000;
+        width: 100%;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    #student_list .list-group-item {
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+    #student_list .list-group-item:hover {
+        background-color: #f1f1f1;
+    }
+
+    #student_search:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+    }
+</style>
 {% endblock %}

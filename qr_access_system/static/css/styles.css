@@ -1,18 +1,31 @@
+@font-face {
+    font-family: Nexa-ExtraLight;
+    src: url('../fonts/nexa/Nexa-ExtraLight.ttf');
+    
+  }
+
+  
+  @font-face {
+    font-family: Nexa-Heavy;
+    src: url('../fonts/nexa/Nexa-Heavy.ttf');
+   
+  }
+
 /* Variables de colores */
 :root {
-    --primary-color: #007bff; /* Azul principal */
-    --secondary-color: #6c757d; /* Gris secundario */
+    --primary-color: #121023; /* Azul principal */
+    --secondary-color: #FFDF2D; /* amarillo secundario */
     --background-color: #f8f9fa; /* Fondo claro */
     --text-color: #343a40; /* Texto oscuro */
     --border-color: #dee2e6; /* Bordes */
-    --hover-color: #0056b3; /* Azul oscuro para hover */
+    --hover-color: #89889b; /* Azul oscuro para hover */
     --danger-color: #dc3545; /* Rojo para acciones peligrosas */
     --success-color: #28a745; /* Verde para acciones exitosas */
 }
 
 /* Estilo global */
 body {
-    font-family: 'Arial', sans-serif;
+    font-family: 'Nexa-ExtraLight', Arial, sans-serif;
     background-color: var(--background-color);
     color: var(--text-color);
     margin: 0;
@@ -22,13 +35,14 @@ body {
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 100px;
 }
 
 /* Títulos */
 h1, h2, h3, h4, h5, h6 {
     color: var(--primary-color);
     font-weight: bold;
+    font-family: 'Nexa-Heavy', Arial, sans-serif;
 }
 
 /* Botones */

@@ -12,9 +12,13 @@
             <div class="form-group">
                 <label for="lab_id">Laboratorio</label>
                 <select class="form-control" id="lab_id" name="lab_id" required>
-                    {% for lab in labs %}
-                    <option value="{{ lab.id }}">{{ lab.name }}</option>
-                    {% endfor %}
+                    {% if labs %}
+                        {% for lab in labs %}
+                        <option value="{{ lab.id }}">{{ lab.name }}</option>
+                        {% endfor %}
+                    {% else %}
+                        <option value="" disabled selected>No hay laboratorios disponibles</option>
+                    {% endif %}
                 </select>
             </div>
             <div class="form-group">
@@ -22,11 +26,17 @@
                 <input type="text" class="form-control" id="profe_search" placeholder="Buscar profesor..." oninput="filterProfes()">
                 <input type="hidden" id="profe_id" name="profe_id" required>
                 <ul class="list-group mt-2" id="profe_list" style="max-height: 200px; overflow-y: auto;">
-                    {% for profe in profes %}
-                    <li class="list-group-item" data-id="{{ profe.id }}" data-name="{{ profe.name }}" data-qr="{{ profe.qr_code }}" onclick="selectProfe(this)">
-                        {{ profe.qr_code }} - {{ profe.name }}
-                    </li>
-                    {% endfor %}
+                    {% if users|length > 0 and users|selectattr('role', 'equalto', 'profe')|list|length > 0 %}
+                        {% for user in users %}
+                        {% if user.role == 'profe' %}
+                        <li class="list-group-item" data-id="{{ user.id }}" data-name="{{ user.name }}" data-qr="{{ user.qr_code }}" onclick="selectProfe(this)">
+                            {{ user.qr_code }} - {{ user.name }}
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <li class="list-group-item text-muted">No hay profesores disponibles</li>
+                    {% endif %}
                 </ul>
             </div>
             <div class="form-group">
@@ -80,7 +90,7 @@
                 <tr>
                     <td>{{ schedule.id }}</td>
                     <td>{{ schedule.lab.name }}</td>
-                    <td>{{ schedule.professor.name }}</td>
+                    <td>{{ schedule.assigned_user.name }}</td>
                     <td>{{ schedule.schedule_type }}</td>
                     <td>
                         {% if schedule.schedule_type == 'day' %}
@@ -214,6 +224,7 @@
         let hasVisibleItems = false;
 
         for (let profe of profeItems) {
+            if (profe.classList.contains('text-muted')) continue; // Ignorar mensajes estáticos como "No hay profesores disponibles"
             const name = profe.getAttribute('data-name').toLowerCase();
             const qr = profe.getAttribute('data-qr').toLowerCase();
             if (name.includes(searchValue) || qr.includes(searchValue)) {
@@ -224,8 +235,21 @@
             }
         }
 
-        // Mostrar la lista si hay elementos visibles
-        profeList.style.display = hasVisibleItems ? 'block' : 'none';
+        // Mostrar el mensaje "No hay coincidencias" solo si no hay elementos visibles y el campo de búsqueda no está vacío
+        const noResultsItem = profeList.querySelector('.no-results');
+        if (!hasVisibleItems && searchValue.trim() !== '') {
+            if (!noResultsItem) {
+                const newNoResultsItem = document.createElement('li');
+                newNoResultsItem.className = 'list-group-item text-muted no-results';
+                newNoResultsItem.textContent = 'No hay coincidencias';
+                profeList.appendChild(newNoResultsItem);
+            }
+        } else if (noResultsItem) {
+            noResultsItem.remove();
+        }
+
+        // Mostrar la lista si hay elementos visibles o si el mensaje "No hay coincidencias" está presente
+        profeList.style.display = hasVisibleItems || noResultsItem ? 'block' : 'none';
     }
 
     function selectProfe(profeElement) {

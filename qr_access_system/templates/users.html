@@ -5,7 +5,7 @@
 {% block content %}
 <div class="container margin_top">
     <h1 class="text-center">Gestionar Usuarios</h1>
-    <form method="POST" class="my-4">
+    <form action="{{ url_for('manage_users') }}" method="post" class="my-4">
         <input type="hidden" name="action" value="add">
         <div class="mb-3">
             <label for="username" class="form-label">Nombre de Usuario:</label>
@@ -22,6 +22,7 @@
                 <option value="admin" id="op_admin">Admin</option>
                 <option value="viewer" id="op_viewer">Viewer</option>
                 <option value="profe" id="op_profe">Profe</option>
+                <option value="student" id="op_student">Estudiante</option>
             </select>
         </div>
         
@@ -77,20 +78,31 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <form method="POST" action="{{ url_for('change_user_details') }}">
+            <form method="POST" action="{{ url_for('manage_users') }}">
                 <div class="modal-body">
+                    <input type="hidden" name="action" value="edit">
                     <input type="hidden" name="user_id" value="{{ user.id }}">
                     <div class="form-group">
-                        <label for="username{{ user.id }}">Nombre de Usuario</label>
-                        <input type="text" class="form-control" id="username{{ user.id }}" name="username" value="{{ user.username }}" required>
+                        <label for="name{{ user.id }}">Nombre</label>
+                        <input type="text" class="form-control" id="name{{ user.id }}" name="name" value="{{ user.name }}" required>
                     </div>
                     <div class="form-group">
-                        <label for="new_password{{ user.id }}">Nueva Contraseña</label>
-                        <input type="password" class="form-control" id="new_password{{ user.id }}" name="new_password">
+                        <label for="identificacion{{ user.id }}">Identificación</label>
+                        <input type="text" class="form-control" id="identificacion{{ user.id }}" name="identificacion" value="{{ user.qr_code }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="role{{ user.id }}">Rol</label>
+                        <select class="form-control" id="role{{ user.id }}" name="role" required>
+                            <option value="root" {% if user.role == 'root' %}selected{% endif %}>Root</option>
+                            <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+                            <option value="viewer" {% if user.role == 'viewer' %}selected{% endif %}>Viewer</option>
+                            <option value="profe" {% if user.role == 'profe' %}selected{% endif %}>Profe</option>
+                            <option value="student" {% if user.role == 'Estudiante' %}selected{% endif %}>Estudiante</option>
+                        </select>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="close btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    <button type="button" class=" close btn btn-secondary" data-dismiss="modal">Cerrar</button>
                     <button type="submit" class="btn btn-primary">Guardar cambios</button>
                 </div>
             </form>

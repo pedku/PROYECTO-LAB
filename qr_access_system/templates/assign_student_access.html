@@ -7,12 +7,16 @@
     <h1 class="text-center mb-4">Asignar Acceso a Estudiantes</h1>
     <form method="POST" action="{{ url_for('assign_student_access') }}" class="mb-4">
         <div class="form-group">
-            <label for="student_id">Estudiante</label>
-            <select class="form-control" id="student_id" name="student_id" required>
+            <label for="student_search">Estudiante (Buscar por Nombre o Código QR)</label>
+            <input type="text" class="form-control" id="student_search" placeholder="Buscar estudiante..." oninput="filterStudents()">
+            <input type="hidden" id="student_id" name="student_id" required>
+            <ul class="list-group mt-2" id="student_list" style="max-height: 200px; overflow-y: auto;">
                 {% for student in students %}
-                <option value="{{ student.id }}">{{ student.name }} - {{ student.qr_code }}</option>
+                <li class="list-group-item" data-id="{{ student.id }}" data-name="{{ student.name }}" data-qr="{{ student.qr_code }}" onclick="selectStudent(this)">
+                    {{ student.qr_code }} - {{ student.name }}
+                </li>
                 {% endfor %}
-            </select>
+            </ul>
         </div>
         <div class="form-group">
             <label for="schedule_id">Horario</label>
@@ -40,4 +44,44 @@
         <button type="submit" class="btn btn-primary">Asignar Acceso</button>
     </form>
 </div>
+
+<script>
+    function filterStudents() {
+        const searchValue = document.getElementById('student_search').value.toLowerCase();
+        const studentItems = document.getElementById('student_list').getElementsByTagName('li');
+        for (let student of studentItems) {
+            const name = student.getAttribute('data-name').toLowerCase();
+            const qr = student.getAttribute('data-qr').toLowerCase();
+            if (name.includes(searchValue) || qr.includes(searchValue)) {
+                student.style.display = '';
+            } else {
+                student.style.display = 'none';
+            }
+        }
+    }
+
+    function selectStudent(studentElement) {
+        const studentId = studentElement.getAttribute('data-id');
+        const studentName = studentElement.getAttribute('data-name');
+        document.getElementById('student_search').value = `${studentName}`;
+        document.getElementById('student_id').value = studentId;
+        document.getElementById('student_list').style.display = 'none';
+    }
+
+    document.getElementById('student_search').addEventListener('input', function () {
+        if (this.value.trim() !== '') {
+            document.getElementById('student_list').style.display = 'block';
+        } else {
+            document.getElementById('student_list').style.display = 'none';
+        }
+    });
+
+    document.addEventListener('click', function (event) {
+        const studentSearch = document.getElementById('student_search');
+        const studentList = document.getElementById('student_list');
+        if (!studentSearch.contains(event.target) && !studentList.contains(event.target)) {
+            studentList.style.display = 'none';
+        }
+    });
+</script>
 {% endblock %}

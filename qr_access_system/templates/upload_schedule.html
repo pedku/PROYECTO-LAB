@@ -7,6 +7,13 @@
     <h1 class="text-center mb-4">Cargar Horarios</h1>
     <form action="{{ url_for('upload_schedule') }}" method="post" enctype="multipart/form-data">
         <div class="form-group">
+            <label for="upload_type">Tipo de Carga</label>
+            <select class="form-control" id="upload_type" name="upload_type" required>
+                <option value="professors">Horarios de Profesores</option>
+                <option value="students">Horarios de Estudiantes</option>
+            </select>
+        </div>
+        <div class="form-group">
             <label for="file">Seleccione el archivo Excel</label>
             <input type="file" class="form-control-file" id="file" name="file" accept=".xlsx" required>
         </div>

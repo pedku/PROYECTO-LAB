@@ -1,30 +1,35 @@
 {% extends "base.html" %}
 
-{% block title %}Logs de Acceso{% endblock %}
+{% block title %}Registros de Acceso{% endblock %}
 
 {% block content %}
-<div class="container margin_top rounded p-4 bg-light">
-<h2 class="centered">Registros de Acceso</h2>
-<div class=" border container my-5" style="overflow-x:auto;">
-<table id="dataTable_logs" class="table table-striped">
-    <thead class="centered">
-        <tr>
-            <th class="centered">ID</th>
-            <th class="centered">Profesor</th>
-            <th class="centered">QR</th>
-            <th class="centered">Laboratorio</th>
-            <th class="centered">HORA DE INGRESO</th>
-            <th class="centered">Acciones</th>
-        </tr>
-    </thead>
-    <tbody >
-        {% for log in logs %}
-            <tr  >
+<div class="container margin_top">
+    <h1 class="text-center">Registros de Acceso</h1>
+    <table id="dataTable_logs" class="table table-striped">
+        <thead>
+            <tr>
+                <th class="centered">ID</th>
+                <th class="centered">Laboratorio</th>
+                <th class="centered">Nombre de Usuario</th>
+                
+                <th class="centered">Identificación</th>
+                <th class="centered">Rol</th>
+                <th class="centered">Fecha </th>
+                <th class="centered">Hora</th>
+                <th class="centered">Acción</th>
+                
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
                 <td class="centered">{{ log.id }}</td>
-                <td class="centered">{{ log.professor.name }}</td>
-                <td class="centered">{{ log.professor.qr_code }}</td>
-                <td class="centered">{{ log.lab.name }} - {{ log.lab.description }}</td>
-                <td class="centered">{{ log.timestamp }}</td>
+                <td class="centered">{{ log.lab_name }}</td>
+                <td class="centered">{{ log.name }}</td>
+                <td class="centered">{{ log.user_id }}</td>
+                <td class="centered">{{ log.role }}</td>
+                <td class="centered">{{ log.date }}</td>
+                <td class="centered">{{ log.time }}</td>
                 <td class="centered">
                     <form action="{{ url_for('delete_log') }}" method="POST" onsubmit="return confirm('¿Estás seguro de que deseas eliminar este registro?');">
                         <input type="hidden" name="log_id" value="{{ log.id }}">
@@ -32,9 +37,18 @@
                     </form>
                 </td>
             </tr>
-        {% endfor %}
-    </tbody>
-</table>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
-</div>
+
+<script>
+    // Inicializar DataTable si es necesario
+    document.addEventListener('DOMContentLoaded', function () {
+        const table = document.getElementById('dataTable_logs');
+        if (table) {
+            new DataTable(table);
+        }
+    });
+</script>
 {% endblock %}
