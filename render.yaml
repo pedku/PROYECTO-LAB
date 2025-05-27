@@ -1,14 +1,16 @@
-# Exported from Render on 2025-03-13T19:43:22Z
+# Exported from Render on 2025-05-27T11:51:00Z
 databases:
 - name: laboratorios_db
-  databaseName: laboratorios_db_qya7
-  user: laboratorios_db_qya7_user
+  databaseName: laboratorios_db_0vkf
+  user: laboratorios_db_0vkf_user
   plan: free
   region: oregon
   ipAllowList:
   - source: 0.0.0.0/0
     description: everywhere
   postgresMajorVersion: "16"
+version: "1"
+
 
 
 services:
