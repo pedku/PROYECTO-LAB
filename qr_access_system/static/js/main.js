@@ -10,7 +10,38 @@ let dataTable_viewer;
 let viewer = false;
 let logs = false;
 let dataTable_logs;
+let estudiante = false;
+let estudianteTable;
 
+
+const estudianteOptions = {
+    //scrollX: "2000px",    
+    lengthMenu: [5, 10, 15, 20, 100, 200, 500],
+
+    columnDefs: [   
+        { className: "centered", targets: [0, 1, 2, 3] },
+        { orderable: false, targets: [3] },
+        { searchable: false, targets: [3] }
+        //{ width: "50%", targets: [0] }
+    ],
+     pageLength: 10,
+    destroy: true,
+    language: {
+        lengthMenu: "Mostrar _MENU_ registros por página",
+        zeroRecords: "Ningún usuario encontrado",
+        info: "Mostrando de _START_ a _END_ de un total de _TOTAL_ registros",
+        infoEmpty: "Ningún usuario encontrado",
+        infoFiltered: "(filtrados desde _MAX_ registros totales)",
+        search: "Buscar:",
+        loadingRecords: "Cargando...",
+        paginate: {
+            first: "Primero",
+            last: "Último",
+            next: "Siguiente",
+            previous: "Anterior"
+        }
+    }
+};
 const profesOptions = {
     //scrollX: "2000px",
     lengthMenu: [5, 10, 15, 20, 100, 200, 500],
@@ -128,9 +159,9 @@ const logsOptions = {
     //scrollX: "2000px",
     lengthMenu: [5, 10, 15, 20, 100, 200, 500],
     columnDefs: [
-        { className: "centered", targets: [0, 1, 2,3,4,5] },
-        { orderable: false, targets: [5,2] },
-        { searchable: false, targets: [5] }
+        { className: "centered", targets: [0, 1, 2,3,4,5,6,7] },
+        { orderable: false, targets: [0,7] },
+        { searchable: false, targets: [0,7] }
 
         //{ width: "50%", targets: [0] }
     ],
@@ -141,7 +172,7 @@ const logsOptions = {
         lengthMenu: "Mostrar _MENU_ registros por página",
         zeroRecords: "Ningún usuario encontrado",
         info: "Mostrando de _START_ a _END_ de un total de _TOTAL_ registros",
-        infoEmpty: "Ningún usuario encontrado",
+        infoEmpty: "Ningún registro encontrado",
         infoFiltered: "(filtrados desde _MAX_ registros totales)",
         search: "Buscar:",
         loadingRecords: "Cargando...",
@@ -185,6 +216,7 @@ const labsOptions = {
     }
 }
 
+
 const initDataTable_labs = async () => {
     $('[id^=scheduleTable]').each(function() {
         var tableId = $(this).attr('id');
@@ -218,6 +250,14 @@ const initDataTable_usuario = async () => {
 
     usuarioTable = $("#dataTable_usuarios").DataTable(usuarioOptions);
     usuario = true;
+};
+
+const initDataTable_estudiante = async () => {
+    if (estudiante) {
+        estudianteTable.destroy();
+    }
+    estudianteTable = $("#dataTable_estudiantes").DataTable(estudianteOptions);
+    estudiante = true;
 };
 
 const initDataTable_horario = async () => {
@@ -256,6 +296,7 @@ window.addEventListener("load", async () => {
     await initDataTable_viewer();
     await initDataTable_logs();
     await initDataTable_labs();
+    await initDataTable_estudiante();
    
 
 

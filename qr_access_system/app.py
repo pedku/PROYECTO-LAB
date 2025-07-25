@@ -24,8 +24,8 @@ app.secret_key = os.getenv('SECRET_KEY', 'default_secret_key')
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv( 'DATABASE_URL')
-#app.config['SQLALCHEMY_DATABASE_URI'] =  'postgresql://postgres:Pc200172@localhost/laboratorios_db'
+#app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv( 'DATABASE_URL')
+app.config['SQLALCHEMY_DATABASE_URI'] =  'postgresql://postgres:Pc200172@localhost/laboratorios_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 UPLOAD_FOLDER = 'uploads'
@@ -443,7 +443,7 @@ def manage_schedule():
                         Schedule.end_time > start_time
                     ).first()
                     if existing_schedule:
-                        flash('Ya existe un horario para este día de la semana con cruce de horario', 'warning')
+                        flash('Ya existe un horario para esta fecha, existe un cruce de horario', 'warning')
                         return redirect(url_for('manage_schedule'))
                     new_schedule = Schedule(
                         lab_id=lab_id,
@@ -464,7 +464,7 @@ def manage_schedule():
                         Schedule.end_time > start_time
                     ).first()
                     if existing_schedule_date:
-                        flash('Ya existe un horario para esta fecha con cruce de horario', 'warning')
+                        flash('Ya existe un horario para esta fecha, existe un cruce de horario', 'warning')
                         return redirect(url_for('manage_schedule'))
                     new_schedule = Schedule(
                         lab_id=lab_id,
@@ -484,36 +484,92 @@ def manage_schedule():
 
             elif action == 'delete':
                 schedule_id = request.form['schedule_id']
-                Schedule.query.filter_by(id=schedule_id).delete()
+                deleted = Schedule.query.filter_by(id=schedule_id).delete()
                 db.session.commit()
-                flash('Horario eliminado exitosamente', 'success')
+                if deleted:
+                    flash('Horario eliminado exitosamente', 'success')
+                else:
+                    flash('No se encontró el horario a eliminar', 'danger')
 
             elif action == 'edit':
                 schedule_id = request.form['schedule_id']
-                schedule = Schedule.query.get(schedule_id)
+                # Usar Session.get() en vez de Query.get() para evitar el warning
+                schedule = db.session.get(Schedule, schedule_id)
                 if schedule:
-                    schedule.lab_id = request.form['lab_id']
-                    schedule.user_id = request.form['profe_id']
-                    schedule.schedule_type = request.form['schedule_type']
-                    schedule.start_time = request.form['start_time']
-                    schedule.end_time = request.form['end_time']
+                    # Corregir casteo de lab_id y profe_id solo si son dígitos
+                    lab_id = request.form['lab_id']
+                    profe_id = request.form['profe_id']
+                    try:
+                        lab_id = int(lab_id)
+                        profe_id = int(profe_id)
+                    except Exception:
+                        flash('Error interno: ID de laboratorio o profesor inválido.', 'danger')
+                        return redirect(url_for('manage_schedule'))
+                    schedule_type = request.form['schedule_type']
+                    start_time = request.form['start_time']
+                    end_time = request.form['end_time']
 
-                    if schedule.schedule_type == 'day':
-                        schedule.day_of_week = request.form['day_of_week']
+                    # Validar que el profesor exista y tenga el rol 'profe'
+                    professor = User.query.filter_by(id=profe_id, role='profe').first()
+                    if not professor:
+                        flash('El profesor seleccionado no es válido', 'danger')
+                        return redirect(url_for('manage_schedule'))
+
+                    # Validar cruce de horario al editar
+                    if schedule_type == 'day':
+                        day_of_week = request.form['day_of_week']
+                        existing_schedule = Schedule.query.filter(
+                            Schedule.lab_id == lab_id,
+                            Schedule.schedule_type == 'day',
+                            Schedule.day_of_week == day_of_week,
+                            Schedule.start_time < end_time,
+                            Schedule.end_time > start_time,
+                            Schedule.id != schedule_id
+                        ).first()
+                        if existing_schedule:
+                            flash('Ya existe un horario para este día y franja horaria, existe un cruce de horario', 'warning')
+                            return redirect(url_for('manage_schedule'))
+                        schedule.lab_id = lab_id
+                        schedule.user_id = profe_id
+                        schedule.schedule_type = 'day'
+                        schedule.day_of_week = day_of_week
                         schedule.date = None
-                    elif schedule.schedule_type == 'date':
-                        schedule.date = request.form['date']
+                        schedule.start_time = start_time
+                        schedule.end_time = end_time
+                    elif schedule_type == 'date':
+                        date = request.form['date']
+                        existing_schedule_date = Schedule.query.filter(
+                            Schedule.lab_id == lab_id,
+                            Schedule.schedule_type == 'date',
+                            Schedule.date == date,
+                            Schedule.start_time < end_time,
+                            Schedule.end_time > start_time,
+                            Schedule.id != schedule_id
+                        ).first()
+                        if existing_schedule_date:
+                            flash('Ya existe un horario para esta fecha y franja horaria, existe un cruce de horario', 'warning')
+                            return redirect(url_for('manage_schedule'))
+                        schedule.lab_id = lab_id
+                        schedule.user_id = profe_id
+                        schedule.schedule_type = 'date'
+                        schedule.date = date
                         schedule.day_of_week = None
+                        schedule.start_time = start_time
+                        schedule.end_time = end_time
+                    else:
+                        flash('Tipo de agendamiento no válido', 'danger')
+                        return redirect(url_for('manage_schedule'))
 
                     db.session.commit()
                     flash('Horario actualizado exitosamente', 'success')
                 else:
                     flash('Horario no encontrado', 'danger')
 
-        # Filtrar usuarios con rol 'profe' para el formulario
+        # Para que el modal funcione correctamente, pasar todos los usuarios con rol 'profe'
         users = User.query.filter_by(role='profe').all()
         labs = Laboratory.query.all()
-        schedules = Schedule.query.all()
+        # Cargar los horarios con la relación de usuario asignado (para mostrar el nombre correctamente)
+        schedules = Schedule.query.options(db.joinedload(Schedule.assigned_user)).all()
         return render_template('schedule.html', users=users, labs=labs, schedules=schedules)
 
     except Exception as e:

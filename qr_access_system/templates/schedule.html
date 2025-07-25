@@ -125,7 +125,7 @@
        <div class="modal-dialog" role="document">
            <div class="modal-content">
                <div class="modal-header">
-                   <h5 class="modal-title" id="editModalLabel{{ schedule.id }}">Editar Horario</h5>
+                   <h5 class="modal-title h3" id="editModalLabel{{ schedule.id }}">Editar Horario</h5>
                    <button type="button" class="close custom-close" data-dismiss="modal" aria-label="Close">
                        <span aria-hidden="true">&times;</span>
                    </button>
@@ -143,12 +143,24 @@
                            </select>
                        </div>
                        <div class="form-group">
-                           <label for="profe_id{{ schedule.id }}">Profesor</label>
-                           <select class="form-control" id="profe_id{{ schedule.id }}" name="profe_id" required>
-                               {% for profe in profes %}
-                               <option value="{{ profe.id }}" {% if profe.id == schedule.profe_id %}selected{% endif %}>{{ profe.username }}</option>
+                           <label for="profe_search_edit{{ schedule.id }}">Profesor (Buscar por Identificación o Nombre)</label>
+                           <input type="text" class="form-control" id="profe_search_edit{{ schedule.id }}" placeholder="Buscar profesor..." value="{{ schedule.assigned_user.name }}" autocomplete="off">
+                           <input type="hidden" id="profe_id_edit{{ schedule.id }}" name="profe_id" value="{{ schedule.profe_id }}" required>
+                           <ul class="list-group mt-2" id="profe_list_edit{{ schedule.id }}" style="max-height: 200px; overflow-y: auto; display: none; position: absolute; width: 100%; z-index: 1050;">
+                               {% for user in users %}
+                                   {% if user.role == 'profe' %}
+                                   <li class="list-group-item{% if user.id == schedule.profe_id %} active{% endif %}"
+                                       data-id="{{ user.id }}"
+                                       data-name="{{ user.name }}"
+                                       data-qr="{{ user.qr_code }}">
+                                       {{ user.qr_code }} - {{ user.name }}
+                                   </li>
+                                   {% endif %}
                                {% endfor %}
-                           </select>
+                               {% if users|selectattr('role', 'equalto', 'profe')|list|length == 0 %}
+                                   <li class="list-group-item text-muted">No hay profesores disponibles</li>
+                               {% endif %}
+                           </ul>
                        </div>
                        <div class="form-group">
                            <label for="schedule_type{{ schedule.id }}">Tipo de Agendamiento:</label>
@@ -274,6 +286,143 @@
         if (!profeSearch.contains(event.target) && !profeList.contains(event.target)) {
             profeList.style.display = 'none';
         }
+    });
+
+    // Funciones para el buscador de profesores en el modal de edición
+    function filterProfesEdit(scheduleId) {
+        const input = document.getElementById('profe_search_edit' + scheduleId);
+        const list = document.getElementById('profe_list_edit' + scheduleId);
+        const value = input.value.trim().toLowerCase();
+        let found = false;
+
+        // Elimina mensaje de "no coincidencias" si existe
+        let noResults = list.querySelector('.no-results');
+        if (noResults) noResults.remove();
+
+        // Si el input está vacío, muestra solo el profesor agendado
+        if (value === '') {
+            let anyActive = false;
+            list.querySelectorAll('li[data-id]').forEach(li => {
+                if (li.classList.contains('active')) {
+                    li.style.display = '';
+                    anyActive = true;
+                } else {
+                    li.style.display = 'none';
+                }
+            });
+            list.style.display = anyActive ? 'block' : 'none';
+            return;
+        }
+
+        // Si hay texto, filtra normalmente
+        list.querySelectorAll('li[data-id]').forEach(li => {
+            const name = li.getAttribute('data-name').toLowerCase();
+            const qr = li.getAttribute('data-qr').toLowerCase();
+            if (name.includes(value) || qr.includes(value)) {
+                li.style.display = '';
+                found = true;
+            } else {
+                li.style.display = 'none';
+            }
+        });
+
+        // Si no hay coincidencias, muestra mensaje
+        if (!found) {
+            const msg = document.createElement('li');
+            msg.className = 'list-group-item text-muted no-results';
+            msg.textContent = 'No hay coincidencias';
+            list.appendChild(msg);
+        }
+        list.style.display = 'block';
+    }
+
+    function selectProfeEdit(li, scheduleId) {
+        const input = document.getElementById('profe_search_edit' + scheduleId);
+        const hidden = document.getElementById('profe_id_edit' + scheduleId);
+        const list = document.getElementById('profe_list_edit' + scheduleId);
+        input.value = li.getAttribute('data-name');
+        hidden.value = li.getAttribute('data-id');
+        list.style.display = 'none';
+        // Quitar clase active de todos y poner solo al seleccionado
+        list.querySelectorAll('li[data-id]').forEach(el => el.classList.remove('active'));
+        li.classList.add('active');
+    }
+
+    function showProfeListEdit(scheduleId) {
+        const list = document.getElementById('profe_list_edit' + scheduleId);
+        filterProfesEdit(scheduleId);
+        list.style.display = 'block';
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        {% for schedule in schedules %}
+        (function(scheduleId){
+            const input = document.getElementById('profe_search_edit' + scheduleId);
+            const list = document.getElementById('profe_list_edit' + scheduleId);
+            if (input) {
+                input.addEventListener('input', function () {
+                    filterProfesEdit(scheduleId);
+                });
+                input.addEventListener('focus', function () {
+                    filterProfesEdit(scheduleId);
+                    list.style.display = 'block';
+                });
+            }
+            // Delegar el click en la lista para seleccionar profesor
+            if (list) {
+                list.addEventListener('click', function (event) {
+                    const li = event.target.closest('li[data-id]');
+                    if (li) {
+                        selectProfeEdit(li, scheduleId);
+                    }
+                });
+            }
+            // Ocultar la lista si se hace clic fuera
+            document.addEventListener('mousedown', function (event) {
+                if (input && list && !input.contains(event.target) && !list.contains(event.target)) {
+                    list.style.display = 'none';
+                }
+            });
+            // Al abrir el modal, muestra solo el profesor agendado
+            $('#editModal' + scheduleId).on('shown.bs.modal', function () {
+                filterProfesEdit(scheduleId);
+            });
+        })({{ schedule.id }});
+        {% endfor %}
+    });
+
+    // Función para mostrar/ocultar campos en el modal de edición según el tipo de agendamiento
+    function updateScheduleTypeEdit(scheduleId) {
+        const typeSelect = document.getElementById('schedule_type' + scheduleId);
+        const dayContainer = document.getElementById('day_of_week_container' + scheduleId);
+        const dateContainer = document.getElementById('date_container' + scheduleId);
+        if (!typeSelect || !dayContainer || !dateContainer) return;
+        if (typeSelect.value === 'day') {
+            dayContainer.style.display = 'block';
+            dateContainer.style.display = 'none';
+        } else if (typeSelect.value === 'date') {
+            dayContainer.style.display = 'none';
+            dateContainer.style.display = 'block';
+        } else {
+            dayContainer.style.display = 'none';
+            dateContainer.style.display = 'none';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        {% for schedule in schedules %}
+        // Manejar el cambio de tipo de agendamiento en el modal de edición
+        var typeSelect = document.getElementById('schedule_type{{ schedule.id }}');
+        if (typeSelect) {
+            typeSelect.addEventListener('change', function () {
+                updateScheduleTypeEdit({{ schedule.id }});
+            });
+            // Inicializar el estado correcto al abrir el modal
+            $('#editModal{{ schedule.id }}').on('shown.bs.modal', function () {
+                updateScheduleTypeEdit({{ schedule.id }});
+            });
+        }
+        {% endfor %}
     });
 </script>
 
