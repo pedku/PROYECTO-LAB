@@ -21,11 +21,11 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'default_secret_key')
-app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_SECURE'] = False
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv( 'DATABASE_URL')
-#app.config['SQLALCHEMY_DATABASE_URI'] =  'postgresql://postgres:Pc200172@localhost/laboratorios_db'
+#app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv( 'DATABASE_URL')
+app.config['SQLALCHEMY_DATABASE_URI'] =  'postgresql+psycopg2://postgres:c7uWNuck8s45F@laboratoriosdb.cnw8qko84yj9.us-east-2.rds.amazonaws.com:5432/laboratoriosdb'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 UPLOAD_FOLDER = 'uploads'
@@ -632,7 +632,7 @@ def validate_qr():
     try:
         data = request.json
         lab_name = data.get('labID')  # Obtener el nombre del laboratorio
-        qr_code = data.get('qr')
+        qr_code = data.get('qr').lstrip("0") if len(data.get('qr')) > 10 else data.get('qr')
         current_time = datetime.now(COLOMBIA_TZ).time()
         current_date = datetime.now(COLOMBIA_TZ).date()
 
@@ -670,8 +670,28 @@ def validate_qr():
             Schedule.end_time >= current_time
         ).first()
 
+        # Verificar accesos a estudiantes por fecha
+        student_access = StudentAccess.query.join(Schedule).filter(
+            StudentAccess.user_id == user.id,
+            Schedule.lab_id == lab.id,
+            Schedule.schedule_type == 'date',
+            Schedule.date == current_date,
+            Schedule.start_time <= current_time,
+            Schedule.end_time >= current_time
+        ).first()
+
+        # Verificar accesos a estudiantes por dia de la semana
+        student_access_day = StudentAccess.query.join(Schedule).filter(
+            StudentAccess.user_id == user.id,
+            Schedule.lab_id == lab.id,
+            Schedule.schedule_type == 'day',
+            Schedule.day_of_week == current_day_of_week,
+            Schedule.start_time <= current_time,
+            Schedule.end_time >= current_time
+        ).first()
+
         # Validar si existe un horario válido
-        if schedule_by_date or schedule_by_day:
+        if schedule_by_date or schedule_by_day or student_access or student_access_day:
             logs = AccessLog(
                 user_id=user.id,
                 lab_id=lab.id,
@@ -883,13 +903,19 @@ def update_profile():
 def my_schedule():
     user = db.session.get(User, session['user_id'])
     schedules = Schedule.query.filter_by(user_id=user.id).all()
+    schedule_students_access = Schedule.query.join(StudentAccess).filter(StudentAccess.user_id == user.id).all()
 
     # Solo los profesores pueden agendar estudiantes
     students = []
+    profes = User.query.filter_by(role='profe').all()
     if user.role == 'profe':
         students = User.query.filter_by(role='student').all()
+        return render_template('my_schedule.html', user=user, schedules=schedules, students=students)
+    else:
+        print(schedule_students_access)
+        return render_template('my_schedule.html', user=user, schedules=schedule_students_access, students=students, profes=profes)
 
-    return render_template('my_schedule.html', user=user, schedules=schedules, students=students)
+    
 
 # Ruta para ver el carnet del profesor
 @app.route('/my_qr')
@@ -1038,4 +1064,4 @@ if __name__ == '__main__':
         db.create_all()
         create_initial_user()
        
-        app.run(debug=True )
+        app.run(host="0.0.0.0", port=5000, debug=True)

@@ -5,12 +5,13 @@
 {% block content %}
 <div class="container margin_top">
     <h1 class="text-center">Horarios de {{ user.role|capitalize }}</h1>
-    
+
     <!-- Tabla de horarios -->
-    <table class="table">
+    <table class="table" id="dataTable_horarioProfe">
         <thead>
             <tr>
                 <th>Laboratorio</th>
+                {% if user.role == 'student' %}<th>Docente</th>{% endif %}
                 <th>{% if user.role == 'profe' %}Día/Fecha{% else %}Fecha{% endif %}</th>
                 <th>Hora de Inicio</th>
                 <th>Hora de Fin</th>
@@ -20,6 +21,9 @@
             {% for schedule in schedules %}
             <tr>
                 <td>{{ schedule.lab.name }}</td>
+                {% if user.role == 'student' %}
+                <td>{% for profe in profes %} {% if profe.id == schedule.user_id %} {{ profe.name }} {% endif %} {% endfor%}</td>
+                {% endif %}
                 <td>
                     {% if schedule.schedule_type == 'day' %}
                         {{ schedule.day_of_week|capitalize }}

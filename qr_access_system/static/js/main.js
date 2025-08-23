@@ -1,7 +1,9 @@
 let dataTable;
+let dataTable_horarioProfe;
 let horariodata = false;
 let usuario = false;
 let horariodataTable;
+let horariosProfeDataTable;
 let labs;
 let labsTable;
 let usuarioTable;
@@ -78,6 +80,32 @@ const HorarioOptions = {
         { className: "centered", targets: [0, 1, 2, 3, 4, 5, 6] },
         { orderable: false, targets: [6] },
         { searchable: false, targets: [6] }
+        //{ width: "50%", targets: [0] }
+    ],
+    pageLength: 10,
+    destroy: true,
+    language: {
+        lengthMenu: "Mostrar _MENU_ registros por página",
+        zeroRecords: "Ningún usuario encontrado",
+        info: "Mostrando de _START_ a _END_ de un total de _TOTAL_ registros",
+        infoEmpty: "Ningún usuario encontrado",
+        infoFiltered: "(filtrados desde _MAX_ registros totales)",
+        search: "Buscar:",
+        loadingRecords: "Cargando...",
+        paginate: {
+            first: "Primero",
+            last: "Último",
+            next: "Siguiente",
+            previous: "Anterior"
+        }
+    }
+};
+
+const HorarioProfeOptions = {
+    //scrollX: "2000px",
+    lengthMenu: [5, 10, 15, 20],
+    columnDefs: [
+        { className: "centered", targets: [0, 1, 2, 3] }
         //{ width: "50%", targets: [0] }
     ],
     pageLength: 10,
@@ -243,6 +271,15 @@ const initDataTable = async () => {
     dataTableIsInitialized = true;
 };
 
+const initDataTableHorarioProfe = async () => {
+    if (dataTableIsInitialized) {
+        dataTable.destroy();
+    }
+
+    dataTable = $("#dataTable_horarioProfe").DataTable(HorarioProfeOptions);
+    dataTableIsInitialized = true;
+};
+
 const initDataTable_usuario = async () => {
     if (usuario) {
         usuarioTable.destroy();
@@ -269,6 +306,7 @@ const initDataTable_horario = async () => {
     horariodata = true;
 };
 
+
 const initDataTable_logs = async () => {
     if (dataTable_logs) {
         dataTable_logs.destroy();
@@ -291,6 +329,7 @@ const initDataTable_viewer = async () => {
 
 window.addEventListener("load", async () => {
     await initDataTable();
+    await initDataTableHorarioProfe();
     await initDataTable_horario();
     await initDataTable_usuario();
     await initDataTable_viewer();
